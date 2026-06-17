@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AniStream - Anime Ko'rish</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #13131a;
+    --bg3: #1c1c28;
+    --accent: #f47521;
+    --accent2: #ff5f00;
+    --text: #fff;
+    --muted: #8888a0;
+    --card-w: 180px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
+
+  /* ── HEADER ── */
+  #header {
+    position:fixed; top:0; left:0; right:0; z-index:999;
+    padding:0 40px;
+    display:flex; align-items:center; justify-content:space-between;
+    height:64px;
+    background:linear-gradient(to bottom, rgba(10,10,15,0.98) 0%, rgba(10,10,15,0.7) 100%);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(255,255,255,0.05);
+    transition:background 0.3s;
+  }
+  .logo { font-size:26px; font-weight:900; letter-spacing:-1px; color:#fff; cursor:pointer; }
+  .logo span { color:var(--accent); }
+  nav { display:flex; gap:6px; }
+  nav a {
+    color:#ccc; text-decoration:none; padding:6px 14px; border-radius:20px;
+    font-size:14px; font-weight:500; transition:all 0.2s;
+  }
+  nav a:hover, nav a.active { color:#fff; background:rgba(255,255,255,0.1); }
+  .header-right { display:flex; align-items:center; gap:12px; }
+  .search-box {
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.1);
+    border-radius:24px; padding:6px 16px;
+    transition:all 0.3s;
+  }
+  .search-box:focus-within { border-color:var(--accent); background:rgba(244,117,33,0.08); }
+  .search-box input { background:none; border:none; outline:none; color:#fff; font-size:13px; width:160px; }
+  .search-box input::placeholder { color:var(--muted); }
+  .btn { padding:8px 20px; border-radius:24px; border:none; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s; }
+  .btn-outline { background:transparent; border:2px solid var(--accent); color:var(--accent); }
+  .btn-outline:hover { background:var(--accent); color:#fff; }
+  .btn-fill { background:var(--accent); color:#fff; }
+  .btn-fill:hover { background:var(--accent2); transform:scale(1.03); }
+  .hamburger { display:none; font-size:22px; cursor:pointer; color:#fff; background:none; border:none; }
+
+  #mob-menu {
+    display:none; position:fixed; inset:0; background:rgba(10,10,15,0.98);
+    z-index:1000; flex-direction:column; align-items:center; justify-content:center; gap:24px;
+  }
+  #mob-menu.open { display:flex; }
+  #mob-menu a { font-size:22px; color:#fff; text-decoration:none; font-weight:700; }
+  #mob-menu a:hover { color:var(--accent); }
+  #mob-close { position:absolute; top:20px; right:28px; font-size:28px; cursor:pointer; color:#fff; background:none; border:none; }
+
+  /* ── HERO ── */
+  #hero { position:relative; height:520px; margin-top:64px; overflow:hidden; }
+  .slide { position:absolute; inset:0; opacity:0; transition:opacity 0.8s ease; }
+  .slide.active { opacity:1; }
+  .slide img { width:100%; height:100%; object-fit:cover; }
+  .slide-overlay {
+    position:absolute; inset:0;
+    background:linear-gradient(90deg, rgba(10,10,15,0.95) 0%, rgba(10,10,15,0.6) 50%, rgba(10,10,15,0.1) 100%),
+               linear-gradient(to top, rgba(10,10,15,0.9) 0%, transparent 50%);
+  }
+  .slide-content { position:absolute; bottom:80px; left:60px; max-width:500px; }
+  .slide-badges { display:flex; gap:8px; margin-bottom:12px; }
+  .badge { padding:3px 10px; border-radius:4px; font-size:11px; font-weight:800; letter-spacing:0.5px; }
+  .b-sub { background:#22c55e; } .b-dub { background:#3b82f6; } .b-new { background:#ef4444; } .b-hd { background:#a855f7; }
+  .slide-content h1 { font-size:48px; font-weight:900; line-height:1.05; margin-bottom:10px; letter-spacing:-1px; }
+  .slide-meta { display:flex; gap:16px; margin-bottom:12px; font-size:13px; color:#ccc; align-items:center; }
+  .star-rating { color:#facc15; }
+  .slide-desc { color:#bbb; font-size:14px; line-height:1.6; margin-bottom:22px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .slide-btns { display:flex; gap:12px; flex-wrap:wrap; }
+  .sbtn { padding:12px 28px; border-radius:30px; border:none; cursor:pointer; font-size:15px; font-weight:700; transition:all 0.2s; display:flex; align-items:center; gap:8px; }
+  .sbtn-play { background:var(--accent); color:#fff; }
+  .sbtn-play:hover { background:var(--accent2); transform:translateY(-2px); box-shadow:0 8px 24px rgba(244,117,33,0.4); }
+  .sbtn-list { background:rgba(255,255,255,0.12); color:#fff; border:2px solid rgba(255,255,255,0.2); }
+  .sbtn-list:hover { background:rgba(255,255,255,0.2); }
+  .sbtn-info { background:transparent; color:#fff; border:2px solid rgba(255,255,255,0.3); }
+  .sbtn-info:hover { background:rgba(255,255,255,0.1); }
+  .hero-nav { position:absolute; bottom:28px; left:60px; display:flex; gap:8px; align-items:center; }
+  .hero-dot { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.3); cursor:pointer; transition:all 0.3s; border:none; }
+  .hero-dot.active { background:var(--accent); width:24px; border-radius:4px; }
+  .hero-arrow { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.2); color:#fff; width:44px; height:44px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.2s; z-index:5; }
+  .hero-arrow:hover { background:var(--accent); border-color:var(--accent); }
+  #hero-prev { left:16px; } #hero-next { right:16px; }
+
+  /* ── SECTIONS ── */
+  main { padding:0 40px; }
+  .section { margin-bottom:48px; }
+  .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+  .section-title { font-size:20px; font-weight:800; display:flex; align-items:center; gap:10px; }
+  .section-title::before { content:''; width:4px; height:22px; background:var(--accent); border-radius:2px; display:block; }
+  .see-all { color:var(--accent); font-size:13px; font-weight:600; cursor:pointer; background:none; border:none; transition:opacity 0.2s; }
+  .see-all:hover { opacity:0.7; }
+  .carousel-wrap { position:relative; }
+  .carousel { display:flex; gap:16px; overflow-x:auto; padding-bottom:12px; scroll-behavior:smooth; }
+  .carousel::-webkit-scrollbar { height:4px; }
+  .carousel::-webkit-scrollbar-track { background:var(--bg2); border-radius:2px; }
+  .carousel::-webkit-scrollbar-thumb { background:var(--accent); border-radius:2px; }
+  .car-btn { position:absolute; top:35%; transform:translateY(-50%); background:var(--bg3); border:1px solid rgba(255,255,255,0.1); color:#fff; width:38px; height:38px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:14px; z-index:5; transition:all 0.2s; opacity:0; }
+  .carousel-wrap:hover .car-btn { opacity:1; }
+  .car-btn:hover { background:var(--accent); }
+  .car-prev { left:-18px; } .car-next { right:-18px; }
+  .acard { flex-shrink:0; width:var(--card-w); cursor:pointer; transition:transform 0.3s, box-shadow 0.3s; border-radius:10px; overflow:visible; }
+  .acard:hover { transform:translateY(-6px) scale(1.03); z-index:2; }
+  .acard-img { position:relative; border-radius:10px; overflow:hidden; }
+  .acard-img img { width:100%; height:240px; object-fit:cover; display:block; transition:filter 0.3s; }
+  .acard:hover .acard-img img { filter:brightness(0.7); }
+  .acard-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%); opacity:0; transition:opacity 0.3s; display:flex; align-items:center; justify-content:center; }
+  .acard:hover .acard-overlay { opacity:1; }
+  .play-circle { width:48px; height:48px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; }
+  .card-tags { position:absolute; top:8px; left:8px; display:flex; gap:4px; flex-wrap:wrap; }
+  .card-tag { font-size:9px; font-weight:800; padding:2px 6px; border-radius:3px; letter-spacing:0.5px; }
+  .card-progress { position:absolute; bottom:0; left:0; right:0; }
+  .progress-bar { height:3px; background:rgba(255,255,255,0.2); }
+  .progress-fill { height:100%; background:var(--accent); border-radius:1px; }
+  .card-ep { font-size:10px; color:rgba(255,255,255,0.8); padding:3px 8px; }
+  .acard-info { margin-top:8px; padding:0 2px; }
+  .acard-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .acard-meta { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
+  .acard-rating { font-size:11px; color:#facc15; display:flex; align-items:center; gap:3px; }
+  .acard-genre { font-size:10px; color:var(--muted); }
+  .genre-pills { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:32px; }
+  .gpill { padding:7px 18px; border-radius:20px; font-size:13px; font-weight:600; background:var(--bg3); border:1px solid rgba(255,255,255,0.1); cursor:pointer; transition:all 0.2s; color:#ccc; }
+  .gpill:hover, .gpill.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .top10-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+  .top10-card { position:relative; cursor:pointer; border-radius:10px; overflow:hidden; }
+  .top10-card img { width:100%; height:180px; object-fit:cover; display:block; transition:transform 0.3s; }
+  .top10-card:hover img { transform:scale(1.05); }
+  .top10-num { position:absolute; bottom:-4px; left:8px; font-size:72px; font-weight:900; color:transparent; -webkit-text-stroke:3px rgba(255,255,255,0.6); line-height:1; pointer-events:none; }
+  .top10-overlay { position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%); }
+  .top10-title { position:absolute; bottom:8px; right:8px; font-size:12px; font-weight:700; max-width:70%; text-align:right; }
+
+  /* ── VIDEO MODAL ── */
+  #modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; align-items:center; justify-content:center; }
+  #modal-bg.open { display:flex; }
+  #modal { background:var(--bg2); border-radius:16px; width:90%; max-width:900px; overflow:hidden; position:relative; max-height:90vh; overflow-y:auto; }
+  #modal-close { position:absolute; top:14px; right:16px; background:rgba(0,0,0,0.6); border:none; color:#fff; font-size:20px; cursor:pointer; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:10; transition:background 0.2s; }
+  #modal-close:hover { background:var(--accent); }
+  .modal-video { position:relative; background:#000; }
+  .modal-video-inner { background:#111; height:360px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px; position:relative; }
+  .video-thumb { position:absolute; inset:0; overflow:hidden; }
+  .video-thumb img { width:100%; height:100%; object-fit:cover; filter:brightness(0.4); }
+  .play-big { width:72px; height:72px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:28px; color:#fff; cursor:pointer; z-index:2; transition:transform 0.2s, box-shadow 0.2s; border:none; }
+  .play-big:hover { transform:scale(1.1); box-shadow:0 0 40px rgba(244,117,33,0.6); }
+  .watch-note { color:#ccc; font-size:14px; z-index:2; }
+  .video-controls { background:linear-gradient(to top, #000 0%, rgba(0,0,0,0.7) 100%); padding:12px 20px; display:flex; align-items:center; gap:12px; }
+  .vc-btn { background:none; border:none; color:#fff; cursor:pointer; font-size:16px; transition:color 0.2s; }
+  .vc-btn:hover { color:var(--accent); }
+  .progress-track { flex:1; height:4px; background:rgba(255,255,255,0.2); border-radius:2px; cursor:pointer; position:relative; }
+  .progress-track-fill { width:35%; height:100%; background:var(--accent); border-radius:2px; }
+  .vc-time { font-size:12px; color:#ccc; }
+  .modal-info { padding:24px; }
+  .modal-info h2 { font-size:24px; font-weight:900; margin-bottom:8px; }
+  .modal-info-meta { display:flex; gap:16px; color:#ccc; font-size:13px; margin-bottom:12px; flex-wrap:wrap; align-items:center; }
+  .modal-desc { color:#bbb; font-size:14px; line-height:1.6; margin-bottom:20px; }
+  .ep-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:8px; margin-top:12px; }
+  .ep-pill { background:var(--bg3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:8px; text-align:center; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; }
+  .ep-pill:hover, .ep-pill.watched { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .ep-pill.current { background:rgba(244,117,33,0.2); border-color:var(--accent); color:var(--accent); }
+  .modal-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .mact-btn { display:flex; align-items:center; gap:6px; padding:9px 18px; border-radius:20px; border:1px solid rgba(255,255,255,0.2); background:var(--bg3); color:#fff; cursor:pointer; font-size:13px; transition:all 0.2s; }
+  .mact-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .mact-btn.liked { color:#ef4444; border-color:#ef4444; }
+
+  /* ── TOAST ── */
+  #toast { position:fixed; bottom:32px; right:32px; background:var(--bg3); border:1px solid rgba(255,255,255,0.1); border-left:4px solid var(--accent); color:#fff; padding:14px 20px; border-radius:10px; font-size:14px; z-index:9999; transform:translateX(200%); transition:transform 0.4s ease; max-width:280px; }
+  #toast.show { transform:translateX(0); }
+
+  /* ── PAGES ── */
+  #page-watchlist { display:none; padding:90px 40px 40px; min-height:100vh; }
+  #page-watchlist.active { display:block; }
+  #page-watchlist h1 { font-size:32px; font-weight:900; margin-bottom:24px; }
+  #wl-empty { color:var(--muted); font-size:16px; text-align:center; padding:60px; }
+  #wl-grid { display:flex; gap:16px; flex-wrap:wrap; }
+  #page-browse { display:none; padding:90px 40px 40px; min-height:100vh; }
+  #page-browse.active { display:block; }
+  #page-browse h1 { font-size:32px; font-weight:900; margin-bottom:20px; }
+  #browse-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:20px; }
+  #page-main { display:block; }
+  #page-schedule { display:none; padding:90px 40px 40px; min-height:100vh; }
+  #page-schedule.active { display:block; }
+  .schedule-days { display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .sday { padding:7px 16px; border-radius:20px; background:var(--bg3); border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:13px; font-weight:600; color:#ccc; transition:all 0.2s; }
+  .sday.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .schedule-list { display:flex; flex-direction:column; gap:12px; }
+  .sitem { background:var(--bg3); border-radius:12px; padding:14px 18px; display:flex; align-items:center; gap:16px; border:1px solid rgba(255,255,255,0.06); cursor:pointer; transition:border-color 0.2s; }
+  .sitem:hover { border-color:var(--accent); }
+  .sitem-time { font-size:13px; color:var(--accent); font-weight:700; min-width:60px; }
+  .sitem img { width:52px; height:52px; border-radius:8px; object-fit:cover; }
+  .sitem-info { flex:1; }
+  .sitem-title { font-weight:700; font-size:14px; }
+  .sitem-ep { font-size:12px; color:var(--muted); margin-top:2px; }
+  .sitem-new { background:#ef4444; font-size:10px; font-weight:800; padding:2px 7px; border-radius:4px; }
+
+  /* ── PROFILE MODAL ── */
+  #profile-modal { display:none; position:fixed; top:70px; right:40px; background:var(--bg3); border:1px solid rgba(255,255,255,0.1); border-radius:14px; width:220px; z-index:2000; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+  #profile-modal.open { display:block; }
+  .pm-head { padding:20px; background:var(--bg2); text-align:center; border-bottom:1px solid rgba(255,255,255,0.08); }
+  .pm-avatar { width:56px; height:56px; border-radius:50%; background:var(--accent); margin:0 auto 10px; display:flex; align-items:center; justify-content:center; font-size:24px; }
+  .pm-name { font-weight:700; }
+  .pm-email { font-size:11px; color:var(--muted); }
+  .pm-menu a { display:flex; align-items:center; gap:10px; padding:12px 20px; color:#ccc; text-decoration:none; font-size:13px; transition:all 0.2s; }
+  .pm-menu a:hover { background:rgba(255,255,255,0.05); color:#fff; }
+  .pm-menu a i { width:18px; color:var(--muted); }
+  .pm-menu a:hover i { color:var(--accent); }
+  #pm-logout { border-top:1px solid rgba(255,255,255,0.08); }
+
+  /* ── AUTH MODAL ── */
+  #auth-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:3000; align-items:center; justify-content:center; }
+  #auth-modal.open { display:flex; }
+  .auth-box { background:var(--bg2); border-radius:16px; padding:40px; width:380px; position:relative; }
+  .auth-box h2 { font-size:24px; font-weight:900; margin-bottom:6px; }
+  .auth-box p { color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .auth-field { margin-bottom:16px; }
+  .auth-field label { display:block; font-size:12px; font-weight:600; color:#ccc; margin-bottom:6px; }
+  .auth-field input { width:100%; background:var(--bg3); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:11px 14px; color:#fff; font-size:14px; outline:none; transition:border-color 0.2s; }
+  .auth-field input:focus { border-color:var(--accent); }
+  .auth-submit { width:100%; padding:12px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.2s; margin-top:8px; }
+  .auth-submit:hover { background:var(--accent2); }
+  .auth-switch { text-align:center; margin-top:16px; font-size:13px; color:var(--muted); }
+  .auth-switch a { color:var(--accent); cursor:pointer; font-weight:600; }
+  #auth-close { position:absolute; top:14px; right:16px; background:none; border:none; color:#888; font-size:20px; cursor:pointer; }
+
+  /* ── FOOTER ── */
+  footer { background:var(--bg2); border-top:1px solid rgba(255,255,255,0.06); padding:48px 40px 24px; margin-top:48px; }
+  .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:32px; margin-bottom:32px; }
+  .footer-brand .logo { font-size:22px; }
+  .footer-brand p { color:var(--muted); font-size:13px; margin-top:10px; line-height:1.6; max-width:260px; }
+  .footer-socials { display:flex; gap:12px; margin-top:16px; }
+  .footer-socials a { width:36px; height:36px; border-radius:50%; background:var(--bg3); display:flex; align-items:center; justify-content:center; color:#ccc; text-decoration:none; transition:all 0.2s; }
+  .footer-socials a:hover { background:var(--accent); color:#fff; }
+  .footer-col h4 { font-size:14px; font-weight:700; margin-bottom:14px; color:#fff; }
+  .footer-col ul { list-style:none; }
+  .footer-col ul li { margin-bottom:8px; }
+  .footer-col ul li a { color:var(--muted); text-decoration:none; font-size:13px; transition:color 0.2s; }
+  .footer-col ul li a:hover { color:var(--accent); }
+  .footer-bottom { border-top:1px solid rgba(255,255,255,0.06); padding-top:20px; display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; }
+  .admin-link { color:rgba(255,255,255,0.15); font-size:11px; cursor:pointer; text-decoration:none; transition:color 0.3s; }
+  .admin-link:hover { color:var(--accent); }
+
+  /* ════════════════════════════════════════
+     ADMIN PANEL
+  ════════════════════════════════════════ */
+  #admin-login-screen {
+    display:none; position:fixed; inset:0; background:rgba(5,5,10,0.97);
+    z-index:5000; align-items:center; justify-content:center;
+    backdrop-filter:blur(20px);
+  }
+  #admin-login-screen.open { display:flex; }
+  .admin-login-box {
+    background:var(--bg2); border-radius:20px; padding:48px 40px; width:420px;
+    border:1px solid rgba(244,117,33,0.3); box-shadow:0 0 60px rgba(244,117,33,0.1);
+    position:relative;
+  }
+  .admin-login-box .logo { font-size:22px; margin-bottom:6px; display:block; }
+  .admin-login-box h2 { font-size:26px; font-weight:900; margin-bottom:4px; }
+  .admin-login-box p { color:var(--muted); font-size:14px; margin-bottom:28px; }
+  .al-field { margin-bottom:16px; }
+  .al-field label { display:block; font-size:12px; font-weight:600; color:#aaa; margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase; }
+  .al-field input { width:100%; background:var(--bg3); border:1px solid rgba(255,255,255,0.12); border-radius:12px; padding:13px 16px; color:#fff; font-size:14px; outline:none; transition:all 0.2s; }
+  .al-field input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(244,117,33,0.15); }
+  .al-submit { width:100%; padding:14px; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.2s; margin-top:8px; letter-spacing:0.5px; }
+  .al-submit:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(244,117,33,0.4); }
+  .al-close { position:absolute; top:16px; right:20px; background:none; border:none; color:#666; font-size:22px; cursor:pointer; transition:color 0.2s; }
+  .al-close:hover { color:#fff; }
+  .al-error { color:#ef4444; font-size:13px; margin-top:10px; display:none; }
+
+  /* ADMIN PANEL MAIN */
+  #admin-panel {
+    display:none; position:fixed; inset:0;
+    background:#0d0d14; z-index:4000; overflow:hidden;
+    flex-direction:row;
+  }
+  #admin-panel.open { display:flex; }
+
+  /* SIDEBAR */
+  .adm-sidebar {
+    width:240px; background:#111118; border-right:1px solid rgba(255,255,255,0.07);
+    display:flex; flex-direction:column; flex-shrink:0;
+    overflow-y:auto;
+  }
+  .adm-logo { padding:24px 20px; border-bottom:1px solid rgba(255,255,255,0.07); }
+  .adm-logo .logo { font-size:20px; }
+  .adm-logo small { color:var(--muted); font-size:11px; display:block; margin-top:2px; }
+  .adm-nav { padding:16px 12px; flex:1; }
+  .adm-nav-label { font-size:10px; font-weight:700; color:var(--muted); letter-spacing:1px; text-transform:uppercase; padding:8px 8px 6px; margin-top:8px; }
+  .adm-link {
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:10px; margin-bottom:2px;
+    color:#aaa; font-size:13px; font-weight:500; cursor:pointer;
+    transition:all 0.2s; border:none; background:none; width:100%; text-align:left;
+  }
+  .adm-link i { width:18px; font-size:15px; }
+  .adm-link:hover { background:rgba(255,255,255,0.06); color:#fff; }
+  .adm-link.active { background:rgba(244,117,33,0.15); color:var(--accent); }
+  .adm-link.active i { color:var(--accent); }
+  .adm-sidebar-footer { padding:16px; border-top:1px solid rgba(255,255,255,0.07); }
+  .adm-user-chip { display:flex; align-items:center; gap:10px; }
+  .adm-user-chip .av { width:32px; height:32px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .adm-user-chip .info { flex:1; overflow:hidden; }
+  .adm-user-chip .info .nm { font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .adm-user-chip .info .rl { font-size:10px; color:var(--accent); }
+  .adm-exit { background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; transition:color 0.2s; }
+  .adm-exit:hover { color:#ef4444; }
+
+  /* CONTENT AREA */
+  .adm-content { flex:1; overflow-y:auto; display:flex; flex-direction:column; }
+  .adm-topbar { padding:16px 28px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; flex-shrink:0; background:#0d0d14; position:sticky; top:0; z-index:10; }
+  .adm-topbar h2 { font-size:18px; font-weight:800; }
+  .adm-topbar-actions { display:flex; gap:10px; align-items:center; }
+  .adm-btn { padding:9px 18px; border-radius:20px; border:none; cursor:pointer; font-size:13px; font-weight:600; transition:all 0.2s; display:flex; align-items:center; gap:6px; }
+  .adm-btn-primary { background:var(--accent); color:#fff; }
+  .adm-btn-primary:hover { background:var(--accent2); }
+  .adm-btn-ghost { background:rgba(255,255,255,0.08); color:#ccc; border:1px solid rgba(255,255,255,0.12); }
+  .adm-btn-ghost:hover { background:rgba(255,255,255,0.15); color:#fff; }
+  .adm-btn-danger { background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+  .adm-btn-danger:hover { background:#ef4444; color:#fff; }
+  .adm-body { padding:24px 28px; flex:1; }
+
+  /* DASHBOARD */
+  .adm-page { display:none; }
+  .adm-page.active { display:block; }
+  .stat-cards { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:28px; }
+  .stat-card { background:#111118; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:20px; transition:border-color 0.2s; }
+  .stat-card:hover { border-color:var(--accent); }
+  .stat-card .sc-label { font-size:12px; color:var(--muted); font-weight:600; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:10px; }
+  .stat-card .sc-val { font-size:32px; font-weight:900; color:#fff; line-height:1; }
+  .stat-card .sc-sub { font-size:12px; color:#22c55e; margin-top:6px; }
+  .stat-card .sc-icon { float:right; font-size:28px; opacity:0.3; margin-top:-36px; }
+
+  /* TABLE */
+  .adm-table-wrap { background:#111118; border:1px solid rgba(255,255,255,0.08); border-radius:14px; overflow:hidden; }
+  .adm-table-header { padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; }
+  .adm-table-header h3 { font-size:15px; font-weight:700; }
+  .adm-search { background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.1); border-radius:20px; padding:7px 14px; color:#fff; font-size:13px; outline:none; width:220px; }
+  .adm-search:focus { border-color:var(--accent); }
+  table { width:100%; border-collapse:collapse; }
+  table th { padding:12px 16px; text-align:left; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02); }
+  table td { padding:12px 16px; font-size:13px; border-bottom:1px solid rgba(255,255,255,0.05); vertical-align:middle; }
+  table tr:last-child td { border-bottom:none; }
+  table tr:hover td { background:rgba(255,255,255,0.03); }
+  .td-img { width:40px; height:40px; border-radius:8px; object-fit:cover; }
+  .td-badge { padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; }
+  .td-badge.sub { background:rgba(34,197,94,0.2); color:#22c55e; }
+  .td-badge.dub { background:rgba(59,130,246,0.2); color:#3b82f6; }
+  .td-tag { padding:2px 6px; border-radius:3px; font-size:10px; font-weight:600; background:var(--bg3); color:#aaa; margin-right:3px; }
+  .td-actions { display:flex; gap:6px; }
+  .td-btn { padding:5px 10px; border-radius:6px; border:none; cursor:pointer; font-size:11px; font-weight:600; transition:all 0.2s; }
+  .td-btn-edit { background:rgba(244,117,33,0.15); color:var(--accent); }
+  .td-btn-edit:hover { background:var(--accent); color:#fff; }
+  .td-btn-del { background:rgba(239,68,68,0.12); color:#ef4444; }
+  .td-btn-del:hover { background:#ef4444; color:#fff; }
+  .td-rating { color:#facc15; font-weight:700; }
+
+  /* FORM MODAL */
+  #form-modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:6000; align-items:center; justify-content:center; }
+  #form-modal-bg.open { display:flex; }
+  #form-modal { background:#111118; border-radius:18px; width:680px; max-width:95vw; max-height:90vh; overflow-y:auto; position:relative; border:1px solid rgba(255,255,255,0.1); }
+  .fm-header { padding:22px 28px; border-bottom:1px solid rgba(255,255,255,0.07); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; background:#111118; z-index:2; }
+  .fm-header h3 { font-size:18px; font-weight:800; }
+  .fm-close { background:none; border:none; color:#666; font-size:20px; cursor:pointer; }
+  .fm-close:hover { color:#fff; }
+  .fm-body { padding:24px 28px; }
+  .fm-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .fm-field { margin-bottom:16px; }
+  .fm-field.full { grid-column:1/-1; }
+  .fm-field label { display:block; font-size:12px; font-weight:600; color:#aaa; margin-bottom:6px; letter-spacing:0.5px; text-transform:uppercase; }
+  .fm-field input, .fm-field select, .fm-field textarea {
+    width:100%; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+    border-radius:10px; padding:11px 14px; color:#fff; font-size:14px; outline:none;
+    transition:all 0.2s; font-family:inherit;
+  }
+  .fm-field input:focus, .fm-field select:focus, .fm-field textarea:focus { border-color:var(--accent); background:rgba(244,117,33,0.05); }
+  .fm-field textarea { resize:vertical; min-height:90px; }
+  .fm-field select option { background:#111118; }
+  .fm-img-preview { width:100%; height:140px; border-radius:10px; object-fit:cover; margin-top:8px; border:1px solid rgba(255,255,255,0.1); display:none; }
+  .fm-img-preview.show { display:block; }
+  .fm-footer { padding:16px 28px; border-top:1px solid rgba(255,255,255,0.07); display:flex; justify-content:flex-end; gap:10px; position:sticky; bottom:0; background:#111118; }
+  .tag-checkboxes { display:flex; gap:8px; flex-wrap:wrap; }
+  .tag-cb { display:none; }
+  .tag-lbl { padding:6px 14px; border-radius:6px; background:var(--bg3); border:1px solid rgba(255,255,255,0.1); font-size:12px; font-weight:600; cursor:pointer; transition:all 0.2s; color:#aaa; }
+  .tag-cb:checked + .tag-lbl { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  /* HERO SLIDES MANAGEMENT */
+  .slides-list { display:flex; flex-direction:column; gap:12px; }
+  .slide-item { background:#111118; border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:16px; }
+  .slide-item img { width:80px; height:48px; border-radius:8px; object-fit:cover; }
+  .slide-item-info { flex:1; }
+  .slide-item-info strong { font-size:14px; font-weight:700; display:block; }
+  .slide-item-info span { font-size:12px; color:var(--muted); }
+  .slide-item-actions { display:flex; gap:8px; }
+
+  /* SCHEDULE MANAGEMENT */
+  .sched-day-tabs { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+  .sched-tab { padding:7px 14px; border-radius:20px; background:var(--bg3); border:1px solid rgba(255,255,255,0.1); cursor:pointer; font-size:13px; font-weight:600; color:#ccc; transition:all 0.2s; }
+  .sched-tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .sched-items-list { display:flex; flex-direction:column; gap:10px; }
+  .sched-item { background:#111118; border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:14px 18px; display:flex; align-items:center; gap:14px; }
+  .sched-item img { width:44px; height:44px; border-radius:8px; object-fit:cover; }
+  .sched-item-info { flex:1; }
+  .sched-item-time { color:var(--accent); font-weight:700; font-size:13px; }
+
+  /* SETTINGS */
+  .settings-section { background:#111118; border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:24px; margin-bottom:20px; }
+  .settings-section h3 { font-size:15px; font-weight:700; margin-bottom:18px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.07); }
+  .settings-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .settings-row:last-child { border-bottom:none; }
+  .settings-row-info strong { font-size:14px; font-weight:600; display:block; }
+  .settings-row-info span { font-size:12px; color:var(--muted); }
+  .toggle-sw { width:44px; height:24px; background:var(--bg3); border-radius:12px; position:relative; cursor:pointer; border:1px solid rgba(255,255,255,0.1); transition:background 0.3s; flex-shrink:0; }
+  .toggle-sw.on { background:var(--accent); }
+  .toggle-sw::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform 0.3s; }
+  .toggle-sw.on::after { transform:translateX(20px); }
+
+  /* ACTIVITY LOG */
+  .activity-list { display:flex; flex-direction:column; gap:8px; }
+  .activity-item { background:#111118; border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 16px; display:flex; align-items:center; gap:12px; }
+  .act-icon { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+  .act-icon.add { background:rgba(34,197,94,0.15); color:#22c55e; }
+  .act-icon.edit { background:rgba(244,117,33,0.15); color:var(--accent); }
+  .act-icon.del { background:rgba(239,68,68,0.15); color:#ef4444; }
+  .act-icon.login { background:rgba(168,85,247,0.15); color:#a855f7; }
+  .act-text { flex:1; font-size:13px; }
+  .act-time { font-size:11px; color:var(--muted); }
+
+  /* CONFIRM DIALOG */
+  #confirm-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:7000; align-items:center; justify-content:center; }
+  #confirm-bg.open { display:flex; }
+  .confirm-box { background:#111118; border-radius:16px; padding:32px; width:380px; text-align:center; border:1px solid rgba(239,68,68,0.3); }
+  .confirm-box h3 { font-size:18px; font-weight:800; margin-bottom:8px; }
+  .confirm-box p { color:var(--muted); font-size:14px; margin-bottom:24px; }
+  .confirm-actions { display:flex; gap:10px; justify-content:center; }
+
+  /* RESPONSIVE */
+  @media(max-width:900px) {
+    #header { padding:0 20px; }
+    nav, .header-right .search-box, .header-right .btn-outline, .header-right .btn-fill { display:none; }
+    .hamburger { display:block; }
+    main { padding:0 16px; }
+    .slide-content { left:24px; bottom:60px; }
+    .slide-content h1 { font-size:28px; }
+    #hero { height:380px; }
+    .top10-grid { grid-template-columns:repeat(3,1fr); }
+    .footer-grid { grid-template-columns:1fr 1fr; }
+    .footer-brand { grid-column:1/-1; }
+    footer { padding:32px 20px 20px; }
+    #page-watchlist, #page-browse, #page-schedule { padding:80px 16px 32px; }
+    .stat-cards { grid-template-columns:repeat(2,1fr); }
+    .adm-sidebar { width:200px; }
+  }
+  @media(max-width:580px) {
+    .top10-grid { grid-template-columns:repeat(2,1fr); }
+    .footer-grid { grid-template-columns:1fr; }
+    :root { --card-w: 148px; }
+    .acard-img img { height:200px; }
+    #modal { width:100%; border-radius:16px 16px 0 0; align-self:flex-end; }
+    #modal-bg { align-items:flex-end; }
+    .modal-video-inner { height:220px; }
+    .slide-content h1 { font-size:22px; }
+    .stat-cards { grid-template-columns:1fr 1fr; }
+    .adm-sidebar { display:none; }
+    .fm-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="logo" onclick="showPage('main')"><span>Ani</span>Stream</div>
+  <nav>
+    <a href="#" class="active" onclick="showPage('main');setActive(this)">Bosh sahifa</a>
+    <a href="#" onclick="showPage('browse');setActive(this)">Ko'rish</a>
+    <a href="#" onclick="showPage('schedule');setActive(this)">Jadval</a>
+    <a href="#" onclick="showPage('watchlist');setActive(this)">Ro'yxatim</a>
+    <a href="#">Kinolar</a>
+    <a href="#">Yangiliklar</a>
+  </nav>
+  <div class="header-right">
+    <div class="search-box">
+      <i class="fas fa-search" style="color:#666;font-size:13px"></i>
+      <input type="text" placeholder="Anime qidirish…" id="search-input" oninput="handleSearch(this.value)">
+    </div>
+    <button class="btn btn-outline" onclick="openAuth('login')">Kirish</button>
+    <button class="btn btn-fill" onclick="openAuth('register')">Ro'yxatdan o'tish</button>
+    <div style="position:relative">
+      <div id="avatar-btn" onclick="toggleProfile()" style="display:none;width:36px;height:36px;border-radius:50%;background:var(--accent);cursor:pointer;align-items:center;justify-content:center;font-size:16px">👤</div>
+    </div>
+  </div>
+  <button class="hamburger" onclick="document.getElementById('mob-menu').classList.add('open')">
+    <i class="fas fa-bars"></i>
+  </button>
+</header>
+
+<!-- MOBILE MENU -->
+<div id="mob-menu">
+  <button id="mob-close" onclick="document.getElementById('mob-menu').classList.remove('open')"><i class="fas fa-times"></i></button>
+  <a href="#" onclick="showPage('main');closeMob()">Bosh sahifa</a>
+  <a href="#" onclick="showPage('browse');closeMob()">Ko'rish</a>
+  <a href="#" onclick="showPage('schedule');closeMob()">Jadval</a>
+  <a href="#" onclick="showPage('watchlist');closeMob()">Ro'yxatim</a>
+  <a href="#">Kinolar</a>
+  <a href="#">Yangiliklar</a>
+  <div style="display:flex;gap:12px;margin-top:16px">
+    <button class="btn btn-outline" onclick="openAuth('login');closeMob()">Kirish</button>
+    <button class="btn btn-fill" onclick="openAuth('register');closeMob()">Ro'yxatdan o'tish</button>
+  </div>
+</div>
+
+<!-- MAIN PAGE -->
+<div id="page-main">
+<div id="hero">
+  <button class="hero-arrow" id="hero-prev" onclick="heroNav(-1)"><i class="fas fa-chevron-left"></i></button>
+  <button class="hero-arrow" id="hero-next" onclick="heroNav(1)"><i class="fas fa-chevron-right"></i></button>
+  <div id="hero-slides-container"></div>
+  <div class="hero-nav" id="hero-dots"></div>
+</div>
+
+<main>
+  <div class="genre-pills" style="margin-top:24px" id="genre-pills">
+    <div class="gpill active" onclick="filterGenre(this,'Barchasi')">Barchasi</div>
+    <div class="gpill" onclick="filterGenre(this,'Jangovar')">⚔️ Jangovar</div>
+    <div class="gpill" onclick="filterGenre(this,'Romantik')">💕 Romantik</div>
+    <div class="gpill" onclick="filterGenre(this,'Komediya')">😄 Komediya</div>
+    <div class="gpill" onclick="filterGenre(this,'Triller')">🔥 Triller</div>
+    <div class="gpill" onclick="filterGenre(this,'Fantasy')">✨ Fantasy</div>
+    <div class="gpill" onclick="filterGenre(this,'Sport')">⚽ Sport</div>
+    <div class="gpill" onclick="filterGenre(this,'Isekai')">🌍 Isekai</div>
+    <div class="gpill" onclick="filterGenre(this,'Mecha')">🤖 Mecha</div>
+    <div class="gpill" onclick="filterGenre(this,'Dahshatli')">👻 Dahshatli</div>
+  </div>
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">Ko'rishni davom ettirish</div>
+      <button class="see-all" onclick="showPage('watchlist')">Barchasini ko'rish →</button>
+    </div>
+    <div class="carousel-wrap">
+      <button class="car-btn car-prev" onclick="scrollCar(this,-1)"><i class="fas fa-chevron-left"></i></button>
+      <div class="carousel" id="c-continue"></div>
+      <button class="car-btn car-next" onclick="scrollCar(this,1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">Trend animalar</div>
+      <button class="see-all" onclick="showPage('browse')">Barchasini ko'rish →</button>
+    </div>
+    <div class="carousel-wrap">
+      <button class="car-btn car-prev" onclick="scrollCar(this,-1)"><i class="fas fa-chevron-left"></i></button>
+      <div class="carousel" id="c-trending"></div>
+      <button class="car-btn car-next" onclick="scrollCar(this,1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-header"><div class="section-title">🔥 Top 10 bugun</div></div>
+    <div class="top10-grid" id="top10-grid"></div>
+  </section>
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">Yangi qismlar</div>
+      <button class="see-all" onclick="showPage('browse')">Barchasini ko'rish →</button>
+    </div>
+    <div class="carousel-wrap">
+      <button class="car-btn car-prev" onclick="scrollCar(this,-1)"><i class="fas fa-chevron-left"></i></button>
+      <div class="carousel" id="c-new"></div>
+      <button class="car-btn car-next" onclick="scrollCar(this,1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">Bu mavsumda mashhur</div>
+      <button class="see-all" onclick="showPage('browse')">Barchasini ko'rish →</button>
+    </div>
+    <div class="carousel-wrap">
+      <button class="car-btn car-prev" onclick="scrollCar(this,-1)"><i class="fas fa-chevron-left"></i></button>
+      <div class="carousel" id="c-popular"></div>
+      <button class="car-btn car-next" onclick="scrollCar(this,1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </section>
+  <section class="section">
+    <div class="section-header">
+      <div class="section-title">❤️ Yoqtirganlartim</div>
+      <button class="see-all" onclick="showPage('watchlist')">Ro'yxatim →</button>
+    </div>
+    <div class="carousel-wrap">
+      <button class="car-btn car-prev" onclick="scrollCar(this,-1)"><i class="fas fa-chevron-left"></i></button>
+      <div class="carousel" id="c-favs"></div>
+      <button class="car-btn car-next" onclick="scrollCar(this,1)"><i class="fas fa-chevron-right"></i></button>
+    </div>
+  </section>
+</main>
+</div>
+
+<!-- BROWSE PAGE -->
+<div id="page-browse">
+  <h1>Ko'rish — Barcha Animalar</h1>
+  <div class="genre-pills" id="browse-genre-pills">
+    <div class="gpill active" onclick="filterBrowse(this,'Barchasi')">Barchasi</div>
+    <div class="gpill" onclick="filterBrowse(this,'Jangovar')">⚔️ Jangovar</div>
+    <div class="gpill" onclick="filterBrowse(this,'Romantik')">💕 Romantik</div>
+    <div class="gpill" onclick="filterBrowse(this,'Komediya')">😄 Komediya</div>
+    <div class="gpill" onclick="filterBrowse(this,'Triller')">🔥 Triller</div>
+    <div class="gpill" onclick="filterBrowse(this,'Fantasy')">✨ Fantasy</div>
+    <div class="gpill" onclick="filterBrowse(this,'Sport')">⚽ Sport</div>
+    <div class="gpill" onclick="filterBrowse(this,'Isekai')">🌍 Isekai</div>
+  </div>
+  <div id="browse-grid"></div>
+</div>
+
+<!-- WATCHLIST PAGE -->
+<div id="page-watchlist">
+  <h1>Mening Ro'yxatim</h1>
+  <div id="wl-empty" style="display:none">
+    <i class="fas fa-bookmark" style="font-size:48px;color:var(--muted);margin-bottom:16px;display:block"></i>
+    <p>Hali hech narsa qo'shilmagan. Anime qo'shish uchun "Ro'yxatga" tugmasini bosing.</p>
+  </div>
+  <div id="wl-grid"></div>
+</div>
+
+<!-- SCHEDULE PAGE -->
+<div id="page-schedule">
+  <h1>Efir Jadvali</h1>
+  <div class="schedule-days" id="sched-days">
+    <div class="sday active" onclick="schedDay(this,'Dush')">Dushanba</div>
+    <div class="sday" onclick="schedDay(this,'Sesh')">Seshanba</div>
+    <div class="sday" onclick="schedDay(this,'Chor')">Chorshanba</div>
+    <div class="sday" onclick="schedDay(this,'Pay')">Payshanba</div>
+    <div class="sday" onclick="schedDay(this,'Jum')">Juma</div>
+    <div class="sday" onclick="schedDay(this,'Shan')">Shanba</div>
+    <div class="sday" onclick="schedDay(this,'Yak')">Yakshanba</div>
+  </div>
+  <div class="schedule-list" id="sched-list"></div>
+</div>
+
+<!-- VIDEO MODAL -->
+<div id="modal-bg" onclick="closeModalBg(event)">
+  <div id="modal">
+    <button id="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    <div class="modal-video">
+      <div class="modal-video-inner" id="modal-video-inner">
+        <div class="video-thumb"><img id="modal-thumb" src="" alt=""></div>
+        <button class="play-big" onclick="playVideo()"><i class="fas fa-play"></i></button>
+        <p class="watch-note" id="watch-note">Ko'rishni boshlash uchun bosing</p>
+      </div>
+      <div class="video-controls">
+        <button class="vc-btn" onclick="togglePlay()"><i class="fas fa-play" id="play-icon"></i></button>
+        <button class="vc-btn"><i class="fas fa-step-backward"></i></button>
+        <button class="vc-btn"><i class="fas fa-step-forward"></i></button>
+        <div class="progress-track" onclick="seekVideo(event)">
+          <div class="progress-track-fill" id="vid-progress"></div>
+        </div>
+        <span class="vc-time" id="vid-time">07:21 / 23:45</span>
+        <button class="vc-btn" onclick="toggleMute()"><i class="fas fa-volume-up" id="vol-icon"></i></button>
+        <button class="vc-btn"><i class="fas fa-closed-captioning"></i></button>
+        <button class="vc-btn"><i class="fas fa-cog"></i></button>
+        <button class="vc-btn"><i class="fas fa-expand"></i></button>
+      </div>
+    </div>
+    <div class="modal-info">
+      <h2 id="modal-title"></h2>
+      <div class="modal-info-meta" id="modal-meta"></div>
+      <p class="modal-desc" id="modal-desc"></p>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#ccc">Qismlar:</div>
+      <div class="ep-list" id="modal-eps"></div>
+      <div class="modal-actions">
+        <button class="mact-btn" id="like-btn" onclick="toggleLike()"><i class="fas fa-heart"></i> Yoqdi</button>
+        <button class="mact-btn" onclick="addWatchlistFromModal()"><i class="fas fa-bookmark"></i> Ro'yxatga</button>
+        <button class="mact-btn"><i class="fas fa-share-alt"></i> Ulashish</button>
+        <button class="mact-btn"><i class="fas fa-download"></i> Yuklab olish</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE DROPDOWN -->
+<div id="profile-modal">
+  <div class="pm-head">
+    <div class="pm-avatar">👤</div>
+    <div class="pm-name" id="pm-name">Foydalanuvchi</div>
+    <div class="pm-email" id="pm-email">user@example.com</div>
+  </div>
+  <div class="pm-menu">
+    <a href="#"><i class="fas fa-user"></i> Profilim</a>
+    <a href="#" onclick="showPage('watchlist');toggleProfile()"><i class="fas fa-bookmark"></i> Ro'yxatim</a>
+    <a href="#"><i class="fas fa-history"></i> Ko'rish tarixi</a>
+    <a href="#"><i class="fas fa-star"></i> Premium</a>
+    <a href="#"><i class="fas fa-cog"></i> Sozlamalar</a>
+    <a href="#" id="pm-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Chiqish</a>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="auth-modal">
+  <div class="auth-box">
+    <button id="auth-close" onclick="closeAuth()"><i class="fas fa-times"></i></button>
+    <div id="auth-login-view">
+      <h2>Xush kelibsiz! 👋</h2>
+      <p>Anime ko'rishni davom ettirish uchun kiring</p>
+      <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="email@misol.uz"></div>
+      <div class="auth-field"><label>Parol</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <button class="auth-submit" onclick="doLogin()">Kirish</button>
+      <p class="auth-switch">Akkaunt yo'qmi? <a onclick="switchAuth('register')">Ro'yxatdan o'tish</a></p>
+    </div>
+    <div id="auth-register-view" style="display:none">
+      <h2>Hisob yaratish 🎉</h2>
+      <p>AniStream'ga xush kelibsiz!</p>
+      <div class="auth-field"><label>Ism</label><input type="text" id="reg-name" placeholder="Ismingiz"></div>
+      <div class="auth-field"><label>Email</label><input type="email" id="reg-email" placeholder="email@misol.uz"></div>
+      <div class="auth-field"><label>Parol</label><input type="password" id="reg-pass" placeholder="••••••••"></div>
+      <button class="auth-submit" onclick="doRegister()">Ro'yxatdan o'tish</button>
+      <p class="auth-switch">Allaqachon akkaunt bormi? <a onclick="switchAuth('login')">Kirish</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo"><span>Ani</span>Stream</div>
+      <p>Eng yaxshi anime filmlar va seriallarni yuqori sifatda, o'zbek, ingliz va yapon tillarida tomosha qiling.</p>
+      <div class="footer-socials">
+        <a href="#"><i class="fab fa-telegram"></i></a>
+        <a href="#"><i class="fab fa-instagram"></i></a>
+        <a href="#"><i class="fab fa-youtube"></i></a>
+        <a href="#"><i class="fab fa-discord"></i></a>
+        <a href="#"><i class="fab fa-twitter"></i></a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Navigatsiya</h4>
+      <ul>
+        <li><a href="#" onclick="showPage('main')">Bosh sahifa</a></li>
+        <li><a href="#" onclick="showPage('browse')">Ko'rish</a></li>
+        <li><a href="#" onclick="showPage('schedule')">Jadval</a></li>
+        <li><a href="#">Kinolar</a></li>
+        <li><a href="#">Yangiliklar</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Qo'llab-quvvatlash</h4>
+      <ul>
+        <li><a href="#">Yordam markazi</a></li>
+        <li><a href="#">Aloqa</a></li>
+        <li><a href="#">Ko'p so'raladigan savollar</a></li>
+        <li><a href="#">Fikr bildirish</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Huquqiy</h4>
+      <ul>
+        <li><a href="#">Foydalanish shartlari</a></li>
+        <li><a href="#">Maxfiylik siyosati</a></li>
+        <li><a href="#">Cookie siyosati</a></li>
+        <li><a href="#">DMCA</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span><span style="color:var(--accent)">Ani</span>Stream &copy; 2024. Barcha huquqlar himoyalangan.</span>
+    <a class="admin-link" onclick="openAdminLogin()">⚙ Admin</a>
+  </div>
+</footer>
+
+<!-- ════════════════ ADMIN LOGIN ════════════════ -->
+<div id="admin-login-screen">
+  <div class="admin-login-box">
+    <button class="al-close" onclick="closeAdminLogin()"><i class="fas fa-times"></i></button>
+    <span class="logo"><span>Ani</span>Stream</span>
+    <h2>Admin Panel</h2>
+    <p>Boshqaruv paneliga kirish uchun ma'lumotlarni kiriting</p>
+    <div class="al-field">
+      <label>Foydalanuvchi nomi</label>
+      <input type="text" id="adm-username" placeholder="admin" autocomplete="off">
+    </div>
+    <div class="al-field">
+      <label>Parol</label>
+      <input type="password" id="adm-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()">
+    </div>
+    <button class="al-submit" onclick="doAdminLogin()"><i class="fas fa-shield-alt"></i> Kirish</button>
+    <p class="al-error" id="adm-login-err"><i class="fas fa-exclamation-circle"></i> Noto'g'ri foydalanuvchi nomi yoki parol!</p>
+  </div>
+</div>
+
+<!-- ════════════════ ADMIN PANEL ════════════════ -->
+<div id="admin-panel">
+  <!-- SIDEBAR -->
+  <div class="adm-sidebar">
+    <div class="adm-logo">
+      <div class="logo"><span>Ani</span>Stream</div>
+      <small>Boshqaruv paneli</small>
+    </div>
+    <div class="adm-nav">
+      <div class="adm-nav-label">Asosiy</div>
+      <button class="adm-link active" onclick="admPage('dashboard',this)"><i class="fas fa-chart-line"></i> Dashboard</button>
+      <button class="adm-link" onclick="admPage('anime',this)"><i class="fas fa-film"></i> Animalar</button>
+      <button class="adm-link" onclick="admPage('hero',this)"><i class="fas fa-images"></i> Hero slaydlar</button>
+      <button class="adm-link" onclick="admPage('schedule',this)"><i class="fas fa-calendar"></i> Jadval</button>
+      <div class="adm-nav-label">Foydalanuvchilar</div>
+      <button class="adm-link" onclick="admPage('users',this)"><i class="fas fa-users"></i> Foydalanuvchilar</button>
+      <button class="adm-link" onclick="admPage('activity',this)"><i class="fas fa-history"></i> Faoliyat</button>
+      <div class="adm-nav-label">Tizim</div>
+      <button class="adm-link" onclick="admPage('settings',this)"><i class="fas fa-cog"></i> Sozlamalar</button>
+    </div>
+    <div class="adm-sidebar-footer">
+      <div class="adm-user-chip">
+        <div class="av">👤</div>
+        <div class="info">
+          <div class="nm">Administrator</div>
+          <div class="rl">Super Admin</div>
+        </div>
+        <button class="adm-exit" onclick="closeAdmin()" title="Chiqish"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="adm-content">
+    <div class="adm-topbar">
+      <h2 id="adm-page-title">Dashboard</h2>
+      <div class="adm-topbar-actions">
+        <button class="adm-btn adm-btn-ghost" onclick="refreshAdmin()"><i class="fas fa-sync-alt"></i> Yangilash</button>
+        <button class="adm-btn adm-btn-primary" id="adm-add-btn" onclick="openAnimeForm()"><i class="fas fa-plus"></i> Anime qo'shish</button>
+      </div>
+    </div>
+    <div class="adm-body">
+
+      <!-- DASHBOARD -->
+      <div class="adm-page active" id="adm-dashboard">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="sc-label">Jami animalar</div>
+            <div class="sc-val" id="stat-total">0</div>
+            <div class="sc-sub">↑ 3 ta yangi qo'shildi</div>
+            <div class="sc-icon"><i class="fas fa-film"></i></div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Foydalanuvchilar</div>
+            <div class="sc-val" id="stat-users">0</div>
+            <div class="sc-sub">↑ Bugun 5 ta yangi</div>
+            <div class="sc-icon"><i class="fas fa-users"></i></div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Hero slaydlar</div>
+            <div class="sc-val" id="stat-slides">0</div>
+            <div class="sc-sub">Faol slaydlar soni</div>
+            <div class="sc-icon"><i class="fas fa-images"></i></div>
+          </div>
+          <div class="stat-card">
+            <div class="sc-label">Jadval elementlari</div>
+            <div class="sc-val" id="stat-sched">0</div>
+            <div class="sc-sub">Barcha kunlar bo'yicha</div>
+            <div class="sc-icon"><i class="fas fa-calendar"></i></div>
+          </div>
+        </div>
+
+        <!-- Recent anime table -->
+        <div class="adm-table-wrap">
+          <div class="adm-table-header">
+            <h3>So'nggi qo'shilgan animalar</h3>
+            <button class="adm-btn adm-btn-ghost" onclick="admPage('anime',document.querySelector('.adm-link:nth-child(2))'))">Barchasini ko'rish</button>
+          </div>
+          <table>
+            <thead><tr><th>Rasm</th><th>Nom</th><th>Janr</th><th>Reyting</th><th>Qismlar</th><th>Tags</th><th>Amallar</th></tr></thead>
+            <tbody id="dash-recent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ANIME MANAGEMENT -->
+      <div class="adm-page" id="adm-anime">
+        <div class="adm-table-wrap">
+          <div class="adm-table-header">
+            <h3>Barcha animalar (<span id="anime-count">0</span>)</h3>
+            <input class="adm-search" placeholder="🔍 Anime qidirish…" oninput="filterAdminAnime(this.value)">
+          </div>
+          <table>
+            <thead><tr><th>Rasm</th><th>Nom</th><th>Yil</th><th>Janr</th><th>Reyting</th><th>Qismlar</th><th>Tags</th><th>Amallar</th></tr></thead>
+            <tbody id="anime-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- HERO SLIDES -->
+      <div class="adm-page" id="adm-hero">
+        <div style="margin-bottom:18px;display:flex;justify-content:flex-end">
+          <button class="adm-btn adm-btn-primary" onclick="openHeroForm()"><i class="fas fa-plus"></i> Slayd qo'shish</button>
+        </div>
+        <div class="slides-list" id="hero-slides-list"></div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div class="adm-page" id="adm-schedule">
+        <div class="sched-day-tabs" id="adm-sched-tabs">
+          <div class="sched-tab active" onclick="admSchedDay(this,'Dush')">Dush</div>
+          <div class="sched-tab" onclick="admSchedDay(this,'Sesh')">Sesh</div>
+          <div class="sched-tab" onclick="admSchedDay(this,'Chor')">Chor</div>
+          <div class="sched-tab" onclick="admSchedDay(this,'Pay')">Pay</div>
+          <div class="sched-tab" onclick="admSchedDay(this,'Jum')">Jum</div>
+          <div class="sched-tab" onclick="admSchedDay(this,'Shan')">Shan</div>
+          <div class="sched-tab" onclick="admSchedDay(this,'Yak')">Yak</div>
+        </div>
+        <div style="margin-bottom:14px;display:flex;justify-content:flex-end">
+          <button class="adm-btn adm-btn-primary" onclick="openSchedForm()"><i class="fas fa-plus"></i> Qo'shish</button>
+        </div>
+        <div class="sched-items-list" id="adm-sched-list"></div>
+      </div>
+
+      <!-- USERS -->
+      <div class="adm-page" id="adm-users">
+        <div class="adm-table-wrap">
+          <div class="adm-table-header">
+            <h3>Foydalanuvchilar (<span id="users-count">0</span>)</h3>
+            <input class="adm-search" placeholder="🔍 Qidirish…" oninput="filterAdminUsers(this.value)">
+          </div>
+          <table>
+            <thead><tr><th>#</th><th>Ism</th><th>Email</th><th>Ro'yxatdan o'tgan</th><th>Status</th><th>Amallar</th></tr></thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ACTIVITY -->
+      <div class="adm-page" id="adm-activity">
+        <div class="activity-list" id="activity-list"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="adm-page" id="adm-settings">
+        <div class="settings-section">
+          <h3><i class="fas fa-globe" style="color:var(--accent);margin-right:8px"></i> Sayt sozlamalari</h3>
+          <div class="fm-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="fm-field">
+              <label>Sayt nomi</label>
+              <input type="text" id="sett-sitename" value="AniStream">
+            </div>
+            <div class="fm-field">
+              <label>Admin paroli</label>
+              <input type="password" id="sett-adminpass" placeholder="Yangi parol kiriting">
+            </div>
+            <div class="fm-field">
+              <label>Accent rang</label>
+              <input type="color" id="sett-color" value="#f47521" onchange="changeAccentColor(this.value)" style="height:44px;padding:4px;">
+            </div>
+            <div class="fm-field">
+              <label>Telegramm kanal</label>
+              <input type="text" id="sett-tg" placeholder="@anistream_uz">
+            </div>
+          </div>
+          <button class="adm-btn adm-btn-primary" onclick="saveSettings()"><i class="fas fa-save"></i> Saqlash</button>
+        </div>
+        <div class="settings-section">
+          <h3><i class="fas fa-toggle-on" style="color:var(--accent);margin-right:8px"></i> Funksiyalar</h3>
+          <div class="settings-row">
+            <div class="settings-row-info"><strong>Ro'yxatdan o'tish</strong><span>Foydalanuvchilar ro'yxatdan o'ta olsinmi</span></div>
+            <div class="toggle-sw on" onclick="this.classList.toggle('on')" id="toggle-reg"></div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info"><strong>Hero slider</strong><span>Asosiy sahifada slideshow ko'rsatilsinmi</span></div>
+            <div class="toggle-sw on" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info"><strong>Yuklab olish</strong><span>Foydalanuvchilarga yuklashga ruxsat</span></div>
+            <div class="toggle-sw" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-info"><strong>Texnik ishlash rejimi</strong><span>Saytni vaqtincha to'xtatib qo'yish</span></div>
+            <div class="toggle-sw" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <h3><i class="fas fa-trash-alt" style="color:#ef4444;margin-right:8px"></i> Xavfli zona</h3>
+          <div class="settings-row">
+            <div class="settings-row-info"><strong>Barcha ma'lumotlarni tozalash</strong><span>Bu amalni qaytarib bo'lmaydi!</span></div>
+            <button class="adm-btn adm-btn-danger" onclick="confirmReset()"><i class="fas fa-trash"></i> Tozalash</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ANIME ADD/EDIT FORM MODAL -->
+<div id="form-modal-bg">
+  <div id="form-modal">
+    <div class="fm-header">
+      <h3 id="fm-title">Yangi anime qo'shish</h3>
+      <button class="fm-close" onclick="closeAnimeForm()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="fm-body">
+      <input type="hidden" id="fm-edit-id" value="">
+      <div class="fm-grid">
+        <div class="fm-field">
+          <label>Anime nomi *</label>
+          <input type="text" id="fm-title-input" placeholder="Masalan: Demon Slayer">
+        </div>
+        <div class="fm-field">
+          <label>Yil *</label>
+          <input type="number" id="fm-year" placeholder="2024" min="1960" max="2030">
+        </div>
+        <div class="fm-field">
+          <label>Janr *</label>
+          <select id="fm-genre">
+            <option value="">Janrni tanlang</option>
+            <option value="Jangovar">⚔️ Jangovar</option>
+            <option value="Romantik">💕 Romantik</option>
+            <option value="Komediya">😄 Komediya</option>
+            <option value="Triller">🔥 Triller</option>
+            <option value="Fantasy">✨ Fantasy</option>
+            <option value="Sport">⚽ Sport</option>
+            <option value="Isekai">🌍 Isekai</option>
+            <option value="Mecha">🤖 Mecha</option>
+            <option value="Dahshatli">👻 Dahshatli</option>
+          </select>
+        </div>
+        <div class="fm-field">
+          <label>Reyting (1-10)</label>
+          <input type="number" id="fm-rating" placeholder="8.5" min="1" max="10" step="0.1">
+        </div>
+        <div class="fm-field">
+          <label>Qismlar soni</label>
+          <input type="number" id="fm-eps" placeholder="24" min="1">
+        </div>
+        <div class="fm-field">
+          <label>Ko'rish jarayoni (%)</label>
+          <input type="number" id="fm-progress" placeholder="0" min="0" max="100">
+        </div>
+        <div class="fm-field full">
+          <label>Rasm URL *</label>
+          <input type="text" id="fm-img" placeholder="https://images.unsplash.com/..." oninput="previewImg(this.value)">
+          <img id="fm-img-preview" class="fm-img-preview" src="" alt="Preview">
+        </div>
+        <div class="fm-field full">
+          <label>Tavsif</label>
+          <textarea id="fm-desc" placeholder="Anime haqida qisqacha tavsif…"></textarea>
+        </div>
+        <div class="fm-field full">
+          <label>Teglar</label>
+          <div class="tag-checkboxes">
+            <input type="checkbox" class="tag-cb" id="tag-sub" value="SUB"><label class="tag-lbl" for="tag-sub">SUB</label>
+            <input type="checkbox" class="tag-cb" id="tag-dub" value="DUB"><label class="tag-lbl" for="tag-dub">DUB</label>
+            <input type="checkbox" class="tag-cb" id="tag-new" value="YANGI"><label class="tag-lbl" for="tag-new">YANGI</label>
+            <input type="checkbox" class="tag-cb" id="tag-hd" value="HD"><label class="tag-lbl" for="tag-hd">HD</label>
+          </div>
+        </div>
+        <div class="fm-field full">
+          <label>Hozir ko'rilgan qism (masalan: Qism 5 - 07:21/23:45)</label>
+          <input type="text" id="fm-ep-label" placeholder="Qism 1">
+        </div>
+      </div>
+    </div>
+    <div class="fm-footer">
+      <button class="adm-btn adm-btn-ghost" onclick="closeAnimeForm()">Bekor qilish</button>
+      <button class="adm-btn adm-btn-primary" onclick="saveAnime()"><i class="fas fa-save"></i> Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- HERO FORM MODAL -->
+<div id="hero-form-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:6000;align-items:center;justify-content:center">
+  <div style="background:#111118;border-radius:18px;width:560px;max-width:95vw;border:1px solid rgba(255,255,255,0.1)">
+    <div class="fm-header">
+      <h3 id="hf-title">Yangi slayd qo'shish</h3>
+      <button class="fm-close" onclick="closeHeroForm()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="fm-body">
+      <input type="hidden" id="hf-edit-id" value="">
+      <div class="fm-grid">
+        <div class="fm-field"><label>Anime nomi *</label><input type="text" id="hf-title-inp" placeholder="Demon Slayer"></div>
+        <div class="fm-field"><label>Yil</label><input type="number" id="hf-year" placeholder="2024"></div>
+        <div class="fm-field"><label>Reyting</label><input type="number" id="hf-rating" placeholder="9.1" step="0.1"></div>
+        <div class="fm-field"><label>Qismlar</label><input type="text" id="hf-eps" placeholder="26 ta qism"></div>
+        <div class="fm-field full"><label>Rasm URL *</label><input type="text" id="hf-img" placeholder="https://..." oninput="previewHeroImg(this.value)"><img id="hf-img-prev" class="fm-img-preview" src="" alt=""></div>
+        <div class="fm-field full"><label>Tavsif</label><textarea id="hf-desc" placeholder="Qisqacha tavsif…"></textarea></div>
+        <div class="fm-field full">
+          <label>Teglar</label>
+          <div class="tag-checkboxes">
+            <input type="checkbox" class="tag-cb" id="htag-sub" value="SUB"><label class="tag-lbl" for="htag-sub">SUB</label>
+            <input type="checkbox" class="tag-cb" id="htag-dub" value="DUB"><label class="tag-lbl" for="htag-dub">DUB</label>
+            <input type="checkbox" class="tag-cb" id="htag-new" value="YANGI"><label class="tag-lbl" for="htag-new">YANGI</label>
+            <input type="checkbox" class="tag-cb" id="htag-hd" value="HD"><label class="tag-lbl" for="htag-hd">HD</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fm-footer">
+      <button class="adm-btn adm-btn-ghost" onclick="closeHeroForm()">Bekor qilish</button>
+      <button class="adm-btn adm-btn-primary" onclick="saveHeroSlide()"><i class="fas fa-save"></i> Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULE FORM MODAL -->
+<div id="sched-form-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:6000;align-items:center;justify-content:center">
+  <div style="background:#111118;border-radius:18px;width:500px;max-width:95vw;border:1px solid rgba(255,255,255,0.1)">
+    <div class="fm-header">
+      <h3>Jadvalga qo'shish</h3>
+      <button class="fm-close" onclick="closeSchedForm()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="fm-body">
+      <input type="hidden" id="sf-edit-idx" value="-1">
+      <div class="fm-grid">
+        <div class="fm-field"><label>Kun *</label>
+          <select id="sf-day">
+            <option value="Dush">Dushanba</option><option value="Sesh">Seshanba</option>
+            <option value="Chor">Chorshanba</option><option value="Pay">Payshanba</option>
+            <option value="Jum">Juma</option><option value="Shan">Shanba</option><option value="Yak">Yakshanba</option>
+          </select>
+        </div>
+        <div class="fm-field"><label>Vaqt *</label><input type="time" id="sf-time"></div>
+        <div class="fm-field"><label>Anime nomi *</label><input type="text" id="sf-title" placeholder="One Piece"></div>
+        <div class="fm-field"><label>Qism</label><input type="text" id="sf-ep" placeholder="Qism 1060"></div>
+        <div class="fm-field full"><label>Rasm URL</label><input type="text" id="sf-img" placeholder="https://..." oninput="previewSchedImg(this.value)"><img id="sf-img-prev" class="fm-img-preview" src="" alt=""></div>
+        <div class="fm-field"><label>Anime ID (ixtiyoriy)</label><input type="number" id="sf-id" placeholder="0" min="0"></div>
+        <div class="fm-field" style="display:flex;align-items:center;gap:10px;padding-top:28px">
+          <input type="checkbox" id="sf-isnew" style="width:18px;height:18px;accent-color:var(--accent)">
+          <label for="sf-isnew" style="text-transform:none;font-size:13px;letter-spacing:0">YANGI belgisi</label>
+        </div>
+      </div>
+    </div>
+    <div class="fm-footer">
+      <button class="adm-btn adm-btn-ghost" onclick="closeSchedForm()">Bekor qilish</button>
+      <button class="adm-btn adm-btn-primary" onclick="saveSchedItem()"><i class="fas fa-save"></i> Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div id="confirm-bg">
+  <div class="confirm-box">
+    <i class="fas fa-exclamation-triangle" style="font-size:36px;color:#ef4444;margin-bottom:16px;display:block"></i>
+    <h3 id="confirm-title">Ishonchingiz komilmi?</h3>
+    <p id="confirm-msg">Bu amalni qaytarib bo'lmaydi.</p>
+    <div class="confirm-actions">
+      <button class="adm-btn adm-btn-ghost" onclick="closeConfirm()">Bekor qilish</button>
+      <button class="adm-btn adm-btn-danger" id="confirm-ok-btn">Ha, o'chirish</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════
+// DATA
+// ════════════════════════════════════
+let ANIME_DB = [
+  { id:0,  title:'Demon Slayer',     rating:'9.1', year:2019, genre:'Jangovar', eps:26,   tags:['SUB','DUB'],       progress:35, ep:'Qism 5 - 07:21/23:45',   img:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&q=80', desc:'Tanjiro Kamado oilasini iblis tomonidan yo\'q qilinganidan keyin singlisini qutqarish uchun iblis ovchilar korpusiga qo\'shiladi.' },
+  { id:1,  title:'Attack on Titan',  rating:'9.0', year:2013, genre:'Triller',  eps:87,   tags:['SUB','DUB'],       progress:65, ep:'Qism 12 - 15:00/24:00',  img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=400&q=80', desc:'Insoniyat devlar — Titanlardan himoya qilish uchun ulkan devorlar ichida yashaydi.' },
+  { id:2,  title:'Jujutsu Kaisen',   rating:'8.8', year:2020, genre:'Jangovar', eps:24,   tags:['SUB'],             progress:20, ep:'Qism 3 - 04:30/24:00',   img:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&q=80', desc:'Yuji Itadori kuchli la\'nat — Ryomen Sukuna\'ni yutib yuboradi va sehr olamiga kirib qoladi.' },
+  { id:3,  title:'One Piece',        rating:'8.9', year:1999, genre:'Fantasy',  eps:1000, tags:['SUB','DUB'],       progress:80, ep:'Qism 1060 - 18:00/24:00', img:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&q=80', desc:'Monkey D. Luffy dengiz hayduti bo\'lib, eng katta xazina One Piece\'ni topish uchun dengizlarga chiqadi.' },
+  { id:4,  title:'Bleach: TYBW',     rating:'9.2', year:2022, genre:'Jangovar', eps:52,   tags:['SUB','DUB'],       progress:15, ep:'Qism 2 - 03:10/24:00',   img:'https://images.unsplash.com/photo-1549082984-1323b94df9a6?w=400&q=80', desc:'Ichigo Kurosaki va Shinigamilar kuchli dushman Quincy\'larga qarshi kurashadi.' },
+  { id:5,  title:'Chainsaw Man',     rating:'8.5', year:2022, genre:'Triller',  eps:12,   tags:['SUB','DUB'],       progress:70, ep:'Qism 10 - 16:45/23:45',  img:'https://images.unsplash.com/photo-1563889863889-792e8ecea8c3?w=400&q=80', desc:'Denji ibo\'si uchun pulga muhtoj yigit bo\'lib, Pochita — zanjirli arra iblisi bilan birga yashaydi.' },
+  { id:6,  title:'Naruto Shippuden', rating:'8.6', year:2007, genre:'Jangovar', eps:500,  tags:['SUB','DUB'],       progress:90, ep:'Qism 220 - 20:00/24:00', img:'https://images.unsplash.com/photo-1520209759809-a9bcb6cb3241?w=400&q=80', desc:'Naruto Uzumaki kattaroq va kuchliroq bo\'lib qaytadi. U do\'sti Sasukeni topib, yovuz Akatsuki\'ga qarshi kurashadi.' },
+  { id:7,  title:'My Hero Academia', rating:'8.4', year:2016, genre:'Jangovar', eps:113,  tags:['SUB','DUB'],       progress:45, ep:'Qism 34 - 10:20/23:30',  img:'https://images.unsplash.com/photo-1605979257913-1704eb7b6246?w=400&q=80', desc:'Izuku Midoriya qudratga ega emas dunyo da eng mashhur qahramonga o\'qishga kiradi.' },
+  { id:8,  title:'Tokyo Revengers',  rating:'8.1', year:2021, genre:'Triller',  eps:24,   tags:['SUB'],             progress:0,  ep:'Qism 1',                  img:'https://images.unsplash.com/photo-1551036559-b8dacc1f3a43?w=400&q=80', desc:'Hanagaki Takemichi vaqtni orqaga qaytarib, o\'tmishida yovuz to\'daga qarshi kurashadi.' },
+  { id:9,  title:'Sword Art Online', rating:'7.8', year:2012, genre:'Isekai',   eps:25,   tags:['SUB','DUB'],       progress:55, ep:'Qism 14 - 12:00/24:00',  img:'https://images.unsplash.com/photo-1538388149531-bd1f2e54f17f?w=400&q=80', desc:'Kirito virtual real hayot o\'yinida tutilib qoladi va chiqish uchun o\'yinni yutishi kerak.' },
+  { id:10, title:'Re:Zero',          rating:'8.2', year:2016, genre:'Isekai',   eps:50,   tags:['SUB','DUB'],       progress:30, ep:'Qism 8 - 07:00/46:00',   img:'https://images.unsplash.com/photo-1548536929-46a07082a25b?w=400&q=80', desc:'Subaru Natsuki boshqa dunyoga teleport bo\'lib, o\'limdan keyin vaqtni qayta boshlash kuchiga ega bo\'ladi.' },
+  { id:11, title:'Haikyuu!!',        rating:'8.7', year:2014, genre:'Sport',    eps:85,   tags:['SUB','DUB'],       progress:60, ep:'Qism 22 - 14:30/23:45',  img:'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=400&q=80', desc:'Hinata Shoyo kichik bo\'lsada, voleybol bo\'yicha eng yaxshi bo\'lish uchun kurashadi.' },
+];
+let nextId = 12;
+
+let HERO_SLIDES = [
+  { id:0, title:'Demon Slayer',    year:2019, rating:'9.1', eps:'26 ta qism', img:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1600&q=80', desc:'Tanjiro Kamado oilasini iblis tomonidan yo\'q qilinganidan keyin singlisini qutqarish uchun iblis ovchilar korpusiga qo\'shiladi.', tags:['SUB','DUB','YANGI','HD'] },
+  { id:1, title:'Attack on Titan', year:2013, rating:'9.0', eps:'87 ta qism', img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1600&q=80', desc:'Insoniyat devlar — Titanlardan himoya qilish uchun ulkan devorlar ichida yashaydi.', tags:['SUB','DUB','HD'] },
+  { id:2, title:'Jujutsu Kaisen',  year:2020, rating:'8.8', eps:'24 ta qism', img:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1600&q=80', desc:'Yuji Itadori kuchli la\'nat — Ryomen Sukuna\'ni yutib yuboradi va sehr olamiga kirib qoladi.', tags:['SUB','YANGI','HD'] },
+  { id:3, title:'One Piece',       year:1999, rating:'8.9', eps:'1000+ ta qism', img:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1600&q=80', desc:'Monkey D. Luffy dengiz hayduti bo\'lib, eng katta xazina One Piece\'ni topish uchun dengizlarga chiqadi.', tags:['SUB','DUB','HD'] },
+];
+let nextHeroId = 4;
+
+let scheduleData = {
+  Dush:[
+    { time:'14:00', title:'Demon Slayer',    ep:'Qism 25',   isNew:true,  img:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=100&q=80', id:0 },
+    { time:'17:00', title:'One Piece',       ep:'Qism 1061', isNew:false, img:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&q=80', id:3 },
+    { time:'20:00', title:'Bleach: TYBW',    ep:'Qism 8',    isNew:true,  img:'https://images.unsplash.com/photo-1549082984-1323b94df9a6?w=100&q=80', id:4 },
+  ],
+  Sesh:[
+    { time:'15:30', title:'Jujutsu Kaisen',  ep:'Qism 12',   isNew:true,  img:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=100&q=80', id:2 },
+    { time:'19:00', title:'My Hero Academia',ep:'Qism 45',   isNew:false, img:'https://images.unsplash.com/photo-1605979257913-1704eb7b6246?w=100&q=80', id:7 },
+  ],
+  Chor:[
+    { time:'14:00', title:'Attack on Titan', ep:'Qism 87',   isNew:false, img:'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=100&q=80', id:1 },
+    { time:'18:00', title:'Chainsaw Man',    ep:'Qism 11',   isNew:true,  img:'https://images.unsplash.com/photo-1563889863889-792e8ecea8c3?w=100&q=80', id:5 },
+    { time:'21:00', title:'Naruto Shippuden',ep:'Qism 221',  isNew:true,  img:'https://images.unsplash.com/photo-1520209759809-a9bcb6cb3241?w=100&q=80', id:6 },
+  ],
+  Pay:[
+    { time:'16:00', title:'Haikyuu!!',       ep:'Qism 23',   isNew:false, img:'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=100&q=80', id:11 },
+    { time:'20:30', title:'Tokyo Revengers', ep:'Qism 13',   isNew:true,  img:'https://images.unsplash.com/photo-1551036559-b8dacc1f3a43?w=100&q=80', id:8 },
+  ],
+  Jum:[
+    { time:'13:00', title:'Re:Zero',         ep:'Qism 9',    isNew:false, img:'https://images.unsplash.com/photo-1548536929-46a07082a25b?w=100&q=80', id:10 },
+    { time:'17:00', title:'One Piece',       ep:'Qism 1062', isNew:true,  img:'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=100&q=80', id:3 },
+  ],
+  Shan:[
+    { time:'11:00', title:'Demon Slayer',    ep:'Qism 26',   isNew:true,  img:'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=100&q=80', id:0 },
+    { time:'14:00', title:'Sword Art Online',ep:'Qism 15',   isNew:false, img:'https://images.unsplash.com/photo-1538388149531-bd1f2e54f17f?w=100&q=80', id:9 },
+    { time:'20:00', title:'Jujutsu Kaisen',  ep:'Qism 13',   isNew:true,  img:'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=100&q=80', id:2 },
+  ],
+  Yak:[
+    { time:'12:00', title:'My Hero Academia',ep:'Qism 46',   isNew:false, img:'https://images.unsplash.com/photo-1605979257913-1704eb7b6246?w=100&q=80', id:7 },
+    { time:'18:00', title:'Bleach: TYBW',    ep:'Qism 9',    isNew:true,  img:'https://images.unsplash.com/photo-1549082984-1323b94df9a6?w=100&q=80', id:4 },
+  ],
+};
+
+let watchlist = [];
+let currentUser = null;
+let currentAnime = null;
+let isPlaying = false;
+let isMuted = false;
+let vidProgress = 35;
+let vidTimer = null;
+let registeredUsers = [];
+let activityLog = [];
+let currentAdminSchedDay = 'Dush';
+
+// ════════ ADMIN CREDENTIALS ════════
+let ADMIN_USER = 'admin';
+let ADMIN_PASS = 'admin123';
+
+// ════════ ACTIVITY LOG ════════
+function logActivity(type, text) {
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  activityLog.unshift({ type, text, time: timeStr });
+  if (activityLog.length > 50) activityLog.pop();
+}
+
+// ════════ HERO SLIDER ════════
+let heroIdx = 0;
+let heroTimer;
+
+function buildHero() {
+  const container = document.getElementById('hero-slides-container');
+  const dots = document.getElementById('hero-dots');
+  container.innerHTML = '';
+  dots.innerHTML = '';
+  HERO_SLIDES.forEach((s,i) => {
+    const tagHTML = s.tags.map(t => `<span class="badge ${t==='SUB'?'b-sub':t==='DUB'?'b-dub':t==='YANGI'?'b-new':'b-hd'}">${t}</span>`).join('');
+    const slide = document.createElement('div');
+    slide.className = 'slide' + (i===0?' active':'');
+    slide.innerHTML = `
+      <img src="${s.img}" alt="${s.title}">
+      <div class="slide-overlay"></div>
+      <div class="slide-content">
+        <div class="slide-badges">${tagHTML}</div>
+        <h1>${s.title}</h1>
+        <div class="slide-meta"><span class="star-rating">★ ${s.rating}</span><span>${s.year}</span><span>TV-14</span><span>${s.eps}</span></div>
+        <p class="slide-desc">${s.desc}</p>
+        <div class="slide-btns">
+          <button class="sbtn sbtn-play" onclick="openModal('${s.title.replace(/'/g,"\\'")}',${i})"><i class="fas fa-play"></i> Ko'rish</button>
+          <button class="sbtn sbtn-list" onclick="addWatchlist('${s.title.replace(/'/g,"\\'")}',${i})"><i class="fas fa-plus"></i> Ro'yxatga</button>
+          <button class="sbtn sbtn-info" onclick="openModal('${s.title.replace(/'/g,"\\'")}',${i})"><i class="fas fa-info-circle"></i> Ma'lumot</button>
+        </div>
+      </div>`;
+    container.appendChild(slide);
+    const d = document.createElement('button');
+    d.className = 'hero-dot'+(i===0?' active':'');
+    d.onclick = () => goSlide(i);
+    dots.appendChild(d);
+  });
+  heroIdx = 0;
+  clearInterval(heroTimer);
+  heroTimer = setInterval(() => heroNav(1), 4500);
+}
+
+function goSlide(n) {
+  const slides = document.querySelectorAll('.slide');
+  const dotEls = document.querySelectorAll('.hero-dot');
+  if (!slides.length) return;
+  slides[heroIdx].classList.remove('active');
+  dotEls[heroIdx]?.classList.remove('active');
+  heroIdx = (n + slides.length) % slides.length;
+  slides[heroIdx].classList.add('active');
+  dotEls[heroIdx]?.classList.add('active');
+}
+function heroNav(dir) { goSlide(heroIdx + dir); }
+
+// ════════ CARD BUILDER ════════
+function makeCard(a, showProgress=false) {
+  const tags = (a.tags||[]).map(t => `<span class="card-tag badge ${t==='SUB'?'b-sub':t==='DUB'?'b-dub':'b-new'}">${t}</span>`).join('');
+  const prog = showProgress ? `<div class="card-progress"><div class="progress-bar"><div class="progress-fill" style="width:${a.progress||0}%"></div></div><div class="card-ep">${a.ep||''}</div></div>` : '';
+  const safeTitle = (a.title||'').replace(/'/g,"\\'");
+  return `
+  <div class="acard" onclick="openModal('${safeTitle}',${a.id})">
+    <div class="acard-img">
+      <img src="${a.img}" alt="${a.title}" loading="lazy">
+      <div class="acard-overlay"><div class="play-circle"><i class="fas fa-play"></i></div></div>
+      <div class="card-tags">${tags}</div>
+      ${prog}
+    </div>
+    <div class="acard-info">
+      <div class="acard-title">${a.title}</div>
+      <div class="acard-meta">
+        <div class="acard-rating"><i class="fas fa-star"></i> ${a.rating}</div>
+        <div class="acard-genre">${a.genre}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function fillCarousel(id, items, showProgress=false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = items.map(a => makeCard(a, showProgress)).join('');
+}
+
+function initCarousels() {
+  const continueW = ANIME_DB.filter(a => a.progress > 0).slice(0,8);
+  const trending  = [...ANIME_DB].sort((a,b)=>b.rating-a.rating).slice(0,10);
+  const newest    = ANIME_DB.filter(a => a.year >= 2020).slice(0,8);
+  const popular   = [...ANIME_DB].sort(()=>Math.random()-0.5).slice(0,8);
+  const favs      = ANIME_DB.slice(4,10);
+  fillCarousel('c-continue', continueW, true);
+  fillCarousel('c-trending', trending);
+  fillCarousel('c-new', newest);
+  fillCarousel('c-popular', popular);
+  fillCarousel('c-favs', favs);
+  fillBrowse(ANIME_DB);
+  fillTop10();
+  buildHero();
+}
+
+function fillTop10() {
+  const top = [...ANIME_DB].sort((a,b)=>b.rating-a.rating).slice(0,10);
+  document.getElementById('top10-grid').innerHTML = top.map((a,i) => `
+    <div class="top10-card" onclick="openModal('${(a.title||'').replace(/'/g,"\\'")}',${a.id})">
+      <img src="${a.img}" alt="${a.title}" loading="lazy">
+      <div class="top10-overlay"></div>
+      <div class="top10-num">${i+1}</div>
+      <div class="top10-title">${a.title}</div>
+    </div>`).join('');
+}
+
+function fillBrowse(items) {
+  document.getElementById('browse-grid').innerHTML = items.map(a => makeCard(a)).join('');
+}
+
+function scrollCar(btn, dir) {
+  const wrap = btn.closest('.carousel-wrap');
+  const car = wrap.querySelector('.carousel');
+  car.scrollBy({ left: dir * 300, behavior:'smooth' });
+}
+
+// ════════ GENRE FILTER ════════
+function filterGenre(el, genre) {
+  document.querySelectorAll('#genre-pills .gpill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  showToast('Janr: ' + genre);
+}
+
+function filterBrowse(el, genre) {
+  document.querySelectorAll('#browse-genre-pills .gpill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const items = genre === 'Barchasi' ? ANIME_DB : ANIME_DB.filter(a => a.genre === genre);
+  fillBrowse(items);
+}
+
+// ════════ PAGES ════════
+function showPage(page) {
+  ['main','browse','watchlist','schedule'].forEach(p => {
+    document.getElementById('page-'+p).style.display = p===page ? 'block' : 'none';
+  });
+  window.scrollTo(0,0);
+  if (page==='watchlist') renderWatchlist();
+  if (page==='schedule') renderSchedule('Dush');
+}
+
+function setActive(el) {
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function closeMob() { document.getElementById('mob-menu').classList.remove('open'); }
+
+// ════════ VIDEO MODAL ════════
+function openModal(title, id) {
+  const anime = ANIME_DB[id] || ANIME_DB[0];
+  if (!anime) return;
+  currentAnime = anime;
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-desc').textContent = anime.desc||'';
+  document.getElementById('modal-thumb').src = anime.img||'';
+  document.getElementById('modal-meta').innerHTML = `
+    <span style="color:#facc15">★ ${anime.rating}</span>
+    <span>${anime.year}</span><span>TV-14</span><span>${anime.eps} ta qism</span>
+    ${(anime.tags||[]).map(t=>`<span class="badge ${t==='SUB'?'b-sub':'b-dub'}" style="font-size:10px">${t}</span>`).join('')}
+  `;
+  const epCount = Math.min(anime.eps, 24);
+  const epsEl = document.getElementById('modal-eps');
+  epsEl.innerHTML = '';
+  for (let i=1; i<=epCount; i++) {
+    const d = document.createElement('div');
+    d.className = 'ep-pill'+(i===5?' current':'');
+    d.textContent = 'Qism '+i;
+    d.onclick = () => { document.querySelectorAll('.ep-pill').forEach(e=>e.classList.remove('current')); d.classList.add('current'); showToast(`Qism ${i} tanlandi`); };
+    epsEl.appendChild(d);
+  }
+  isPlaying=false;
+  document.getElementById('play-icon').className='fas fa-play';
+  document.getElementById('watch-note').style.display='';
+  document.querySelector('.play-big').style.display='';
+  vidProgress=anime.progress||0;
+  document.getElementById('vid-progress').style.width=vidProgress+'%';
+  document.getElementById('modal-bg').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('open');
+  document.body.style.overflow='';
+  if (vidTimer) clearInterval(vidTimer);
+  isPlaying=false;
+}
+
+function closeModalBg(e) { if(e.target===document.getElementById('modal-bg')) closeModal(); }
+
+function playVideo() {
+  document.querySelector('.play-big').style.display='none';
+  document.getElementById('watch-note').style.display='none';
+  isPlaying=true;
+  document.getElementById('play-icon').className='fas fa-pause';
+  startVidTimer();
+  showToast('▶ Ko\'rish boshlandi');
+}
+
+function togglePlay() {
+  isPlaying=!isPlaying;
+  document.getElementById('play-icon').className=isPlaying?'fas fa-pause':'fas fa-play';
+  if(isPlaying) startVidTimer(); else clearInterval(vidTimer);
+}
+
+function startVidTimer() {
+  if(vidTimer) clearInterval(vidTimer);
+  vidTimer=setInterval(()=>{
+    if(vidProgress<100){
+      vidProgress+=0.1;
+      document.getElementById('vid-progress').style.width=vidProgress+'%';
+      const total=23*60+45;
+      const cur=Math.floor(total*vidProgress/100);
+      const m=Math.floor(cur/60).toString().padStart(2,'0');
+      const s=(cur%60).toString().padStart(2,'0');
+      document.getElementById('vid-time').textContent=`${m}:${s} / 23:45`;
+    } else clearInterval(vidTimer);
+  },200);
+}
+
+function seekVideo(e) {
+  const rect=e.currentTarget.getBoundingClientRect();
+  vidProgress=((e.clientX-rect.left)/rect.width)*100;
+  document.getElementById('vid-progress').style.width=vidProgress+'%';
+}
+
+function toggleMute() {
+  isMuted=!isMuted;
+  document.getElementById('vol-icon').className=isMuted?'fas fa-volume-mute':'fas fa-volume-up';
+}
+
+function toggleLike() {
+  const btn=document.getElementById('like-btn');
+  btn.classList.toggle('liked');
+  showToast(btn.classList.contains('liked')?'❤️ Yoqdi deb belgilandi!':'Yoqdi belgisi olib tashlandi');
+}
+
+function addWatchlistFromModal() { if(currentAnime) addWatchlist(currentAnime.title,currentAnime.id); }
+
+// ════════ WATCHLIST ════════
+function addWatchlist(title,id) {
+  const anime=ANIME_DB.find(a=>a.id===id);
+  if(!anime) return;
+  if(watchlist.find(a=>a.id===id)){ showToast('⚠️ Allaqachon ro\'yxatda bor!'); return; }
+  watchlist.push(anime);
+  showToast('✅ Ro\'yxatga qo\'shildi: '+title);
+}
+
+function renderWatchlist() {
+  const empty=document.getElementById('wl-empty');
+  const grid=document.getElementById('wl-grid');
+  if(watchlist.length===0){ empty.style.display='block'; grid.innerHTML=''; }
+  else { empty.style.display='none'; grid.innerHTML=watchlist.map(a=>makeCard(a,true)).join(''); }
+}
+
+// ════════ SEARCH ════════
+function handleSearch(q) {
+  if(!q.trim()) return;
+  const results=ANIME_DB.filter(a=>a.title.toLowerCase().includes(q.toLowerCase())||a.genre.toLowerCase().includes(q.toLowerCase()));
+  showPage('browse');
+  fillBrowse(results.length?results:ANIME_DB);
+  showToast(results.length?`🔍 ${results.length} ta natija topildi`:'❌ Natija topilmadi');
+}
+
+document.getElementById('search-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter') handleSearch(e.target.value);
+});
+
+// ════════ SCHEDULE ════════
+function schedDay(el,day) {
+  document.querySelectorAll('.sday').forEach(d=>d.classList.remove('active'));
+  el.classList.add('active');
+  renderSchedule(day);
+}
+
+function renderSchedule(day) {
+  const list=scheduleData[day]||[];
+  document.getElementById('sched-list').innerHTML=list.map(item=>`
+    <div class="sitem" onclick="openModal('${(item.title||'').replace(/'/g,"\\'")}',${item.id||0})">
+      <div class="sitem-time">${item.time}</div>
+      <img src="${item.img}" alt="${item.title}">
+      <div class="sitem-info">
+        <div class="sitem-title">${item.title}</div>
+        <div class="sitem-ep">${item.ep}</div>
+      </div>
+      ${item.isNew?'<span class="sitem-new">YANGI</span>':''}
+    </div>`).join('');
+}
+
+// ════════ AUTH ════════
+function openAuth(type) {
+  document.getElementById('auth-modal').classList.add('open');
+  document.body.style.overflow='hidden';
+  switchAuth(type);
+}
+function closeAuth() {
+  document.getElementById('auth-modal').classList.remove('open');
+  document.body.style.overflow='';
+}
+function switchAuth(type) {
+  document.getElementById('auth-login-view').style.display=type==='login'?'block':'none';
+  document.getElementById('auth-register-view').style.display=type==='register'?'block':'none';
+}
+function doLogin() {
+  const email=document.getElementById('login-email').value;
+  if(!email){ showToast('⚠️ Email kiriting!'); return; }
+  currentUser={name:email.split('@')[0],email};
+  logActivity('login','Foydalanuvchi kirdi: '+currentUser.name);
+  loginSuccess();
+}
+function doRegister() {
+  const name=document.getElementById('reg-name').value;
+  const email=document.getElementById('reg-email').value;
+  if(!name||!email){ showToast('⚠️ Barcha maydonlarni to\'ldiring!'); return; }
+  currentUser={name,email};
+  registeredUsers.push({name,email,date:new Date().toLocaleDateString('uz-UZ'),status:'Faol'});
+  logActivity('login','Yangi foydalanuvchi: '+name);
+  loginSuccess();
+}
+function loginSuccess() {
+  closeAuth();
+  document.getElementById('pm-name').textContent=currentUser.name;
+  document.getElementById('pm-email').textContent=currentUser.email;
+  document.querySelector('.header-right .btn-outline').style.display='none';
+  document.querySelector('.header-right .btn-fill').style.display='none';
+  const av=document.getElementById('avatar-btn');
+  av.style.display='flex';
+  showToast('✅ Xush kelibsiz, '+currentUser.name+'!');
+}
+function logout() {
+  currentUser=null; toggleProfile();
+  document.querySelector('.header-right .btn-outline').style.display='';
+  document.querySelector('.header-right .btn-fill').style.display='';
+  document.getElementById('avatar-btn').style.display='none';
+  showToast('👋 Chiqdingiz');
+}
+function toggleProfile() {
+  document.getElementById('profile-modal').classList.toggle('open');
+}
+
+document.addEventListener('click',e=>{
+  const pm=document.getElementById('profile-modal');
+  const av=document.getElementById('avatar-btn');
+  if(pm.classList.contains('open')&&!pm.contains(e.target)&&!av.contains(e.target)) pm.classList.remove('open');
+});
+
+// ════════ TOAST ════════
+let toastTimer;
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ════════ HEADER SCROLL ════════
+window.addEventListener('scroll',()=>{
+  const h=document.getElementById('header');
+  h.style.background=window.scrollY>40?'rgba(10,10,15,0.99)':'linear-gradient(to bottom, rgba(10,10,15,0.98) 0%, rgba(10,10,15,0.7) 100%)';
+});
+
+// ══════════════════════════════════════
+// ADMIN PANEL
+// ══════════════════════════════════════
+function openAdminLogin() {
+  document.getElementById('admin-login-screen').classList.add('open');
+  document.getElementById('adm-username').value='';
+  document.getElementById('adm-password').value='';
+  document.getElementById('adm-login-err').style.display='none';
+}
+
+function closeAdminLogin() {
+  document.getElementById('admin-login-screen').classList.remove('open');
+}
+
+function doAdminLogin() {
+  const u=document.getElementById('adm-username').value.trim();
+  const p=document.getElementById('adm-password').value;
+  if(u===ADMIN_USER && p===ADMIN_PASS) {
+    closeAdminLogin();
+    openAdmin();
+  } else {
+    document.getElementById('adm-login-err').style.display='block';
+    document.getElementById('adm-password').value='';
+  }
+}
+
+function openAdmin() {
+  document.getElementById('admin-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+  refreshAdmin();
+  admPage('dashboard',document.querySelector('.adm-link'));
+}
+
+function closeAdmin() {
+  document.getElementById('admin-panel').classList.remove('open');
+  document.body.style.overflow='';
+  logActivity('login','Admin chiqdi');
+}
+
+function refreshAdmin() {
+  document.getElementById('stat-total').textContent=ANIME_DB.length;
+  document.getElementById('stat-users').textContent=registeredUsers.length;
+  document.getElementById('stat-slides').textContent=HERO_SLIDES.length;
+  let schedTotal=0;
+  Object.values(scheduleData).forEach(v=>schedTotal+=v.length);
+  document.getElementById('stat-sched').textContent=schedTotal;
+  renderAdminAnimeTable(ANIME_DB);
+  renderDashRecent();
+  renderAdminHero();
+  renderAdminSched(currentAdminSchedDay);
+  renderAdminUsers(registeredUsers);
+  renderActivityLog();
+  document.getElementById('anime-count').textContent=ANIME_DB.length;
+  document.getElementById('users-count').textContent=registeredUsers.length;
+}
+
+function admPage(page, btn) {
+  document.querySelectorAll('.adm-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('adm-'+page)?.classList.add('active');
+  document.querySelectorAll('.adm-link').forEach(l=>l.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const titles = {dashboard:'Dashboard',anime:'Animalar boshqaruvi',hero:'Hero slaydlar',schedule:'Efir jadvali',users:'Foydalanuvchilar',activity:'Faoliyat tarixi',settings:'Sozlamalar'};
+  document.getElementById('adm-page-title').textContent=titles[page]||page;
+  const addBtn=document.getElementById('adm-add-btn');
+  if(page==='anime'){ addBtn.style.display='flex'; addBtn.textContent=''; addBtn.innerHTML='<i class="fas fa-plus"></i> Anime qo\'shish'; addBtn.onclick=openAnimeForm; }
+  else if(page==='hero'){ addBtn.style.display='flex'; addBtn.innerHTML='<i class="fas fa-plus"></i> Slayd qo\'shish'; addBtn.onclick=openHeroForm; }
+  else if(page==='schedule'){ addBtn.style.display='flex'; addBtn.innerHTML='<i class="fas fa-plus"></i> Jadvalga qo\'shish'; addBtn.onclick=openSchedForm; }
+  else addBtn.style.display='none';
+}
+
+// ── Anime Table ──
+function renderDashRecent() {
+  const recent=[...ANIME_DB].slice(-5).reverse();
+  document.getElementById('dash-recent-tbody').innerHTML=recent.map(a=>animeTableRow(a)).join('');
+}
+
+function renderAdminAnimeTable(items) {
+  document.getElementById('anime-tbody').innerHTML=items.map(a=>animeTableRow(a)).join('');
+}
+
+function animeTableRow(a) {
+  const tags=(a.tags||[]).map(t=>`<span class="td-badge ${t.toLowerCase()}">${t}</span>`).join(' ');
+  return `<tr>
+    <td><img class="td-img" src="${a.img}" alt="${a.title}" onerror="this.src='https://via.placeholder.com/40'"></td>
+    <td><strong>${a.title}</strong></td>
+    <td>${a.year}</td>
+    <td><span class="td-tag">${a.genre}</span></td>
+    <td class="td-rating">★ ${a.rating}</td>
+    <td>${a.eps}</td>
+    <td>${tags}</td>
+    <td><div class="td-actions">
+      <button class="td-btn td-btn-edit" onclick="editAnime(${a.id})"><i class="fas fa-edit"></i> Tahrirlash</button>
+      <button class="td-btn td-btn-del" onclick="deleteAnime(${a.id})"><i class="fas fa-trash"></i></button>
+    </div></td>
+  </tr>`;
+}
+
+function filterAdminAnime(q) {
+  const items=q?ANIME_DB.filter(a=>a.title.toLowerCase().includes(q.toLowerCase())||a.genre.toLowerCase().includes(q.toLowerCase())):ANIME_DB;
+  renderAdminAnimeTable(items);
+}
+
+// ── Anime CRUD ──
+function openAnimeForm(editId=null) {
+  document.getElementById('fm-title').textContent = editId!==null?'Animani tahrirlash':'Yangi anime qo\'shish';
+  document.getElementById('fm-edit-id').value = editId!==null?editId:'';
+  document.getElementById('fm-title-input').value='';
+  document.getElementById('fm-year').value='';
+  document.getElementById('fm-genre').value='';
+  document.getElementById('fm-rating').value='';
+  document.getElementById('fm-eps').value='';
+  document.getElementById('fm-progress').value='0';
+  document.getElementById('fm-img').value='';
+  document.getElementById('fm-desc').value='';
+  document.getElementById('fm-ep-label').value='Qism 1';
+  document.getElementById('fm-img-preview').classList.remove('show');
+  ['tag-sub','tag-dub','tag-new','tag-hd'].forEach(id=>{ document.getElementById(id).checked=false; });
+  if(editId!==null) {
+    const a=ANIME_DB.find(x=>x.id===editId);
+    if(!a) return;
+    document.getElementById('fm-title-input').value=a.title;
+    document.getElementById('fm-year').value=a.year;
+    document.getElementById('fm-genre').value=a.genre;
+    document.getElementById('fm-rating').value=a.rating;
+    document.getElementById('fm-eps').value=a.eps;
+    document.getElementById('fm-progress').value=a.progress||0;
+    document.getElementById('fm-img').value=a.img;
+    document.getElementById('fm-desc').value=a.desc||'';
+    document.getElementById('fm-ep-label').value=a.ep||'Qism 1';
+    previewImg(a.img);
+    (a.tags||[]).forEach(t=>{
+      const map={'SUB':'tag-sub','DUB':'tag-dub','YANGI':'tag-new','HD':'tag-hd'};
+      if(map[t]) document.getElementById(map[t]).checked=true;
+    });
+  }
+  document.getElementById('form-modal-bg').classList.add('open');
+}
+
+function editAnime(id) { openAnimeForm(id); }
+
+function closeAnimeForm() { document.getElementById('form-modal-bg').classList.remove('open'); }
+
+function saveAnime() {
+  const title=document.getElementById('fm-title-input').value.trim();
+  const year=parseInt(document.getElementById('fm-year').value)||2024;
+  const genre=document.getElementById('fm-genre').value;
+  const rating=parseFloat(document.getElementById('fm-rating').value)||8.0;
+  const eps=parseInt(document.getElementById('fm-eps').value)||12;
+  const progress=parseInt(document.getElementById('fm-progress').value)||0;
+  const img=document.getElementById('fm-img').value.trim();
+  const desc=document.getElementById('fm-desc').value.trim();
+  const epLabel=document.getElementById('fm-ep-label').value.trim()||'Qism 1';
+  if(!title||!img||!genre){ showToast('⚠️ Nom, janr va rasm URL majburiy!'); return; }
+  const tags=[];
+  if(document.getElementById('tag-sub').checked) tags.push('SUB');
+  if(document.getElementById('tag-dub').checked) tags.push('DUB');
+  if(document.getElementById('tag-new').checked) tags.push('YANGI');
+  if(document.getElementById('tag-hd').checked) tags.push('HD');
+  const editId=document.getElementById('fm-edit-id').value;
+  if(editId!=='') {
+    const idx=ANIME_DB.findIndex(a=>a.id===parseInt(editId));
+    if(idx>-1){
+      ANIME_DB[idx]={...ANIME_DB[idx],title,year,genre,rating:rating.toFixed(1),eps,progress,img,desc,ep:epLabel,tags};
+      logActivity('edit','Anime tahrirlandi: '+title);
+      showToast('✅ Anime yangilandi: '+title);
+    }
+  } else {
+    ANIME_DB.push({id:nextId++,title,year,genre,rating:rating.toFixed(1),eps,progress,img,desc,ep:epLabel,tags});
+    logActivity('add','Yangi anime: '+title);
+    showToast('✅ Anime qo\'shildi: '+title);
+  }
+  closeAnimeForm();
+  refreshAdmin();
+  initCarousels();
+}
+
+function deleteAnime(id) {
+  const a=ANIME_DB.find(x=>x.id===id);
+  showConfirm(`"${a?.title}" ni o'chirmoqchimisiz?`,'Bu amalni qaytarib bo\'lmaydi.',()=>{
+    ANIME_DB=ANIME_DB.filter(x=>x.id!==id);
+    logActivity('del','Anime o\'chirildi: '+(a?.title||''));
+    showToast('🗑 O\'chirildi: '+(a?.title||''));
+    refreshAdmin();
+    initCarousels();
+  });
+}
+
+function previewImg(url) {
+  const el=document.getElementById('fm-img-preview');
+  if(url){ el.src=url; el.classList.add('show'); }
+  else el.classList.remove('show');
+}
+
+// ── Hero Slides ──
+function renderAdminHero() {
+  document.getElementById('hero-slides-list').innerHTML=HERO_SLIDES.map((s,i)=>`
+    <div class="slide-item">
+      <img src="${s.img}" alt="${s.title}" onerror="this.src='https://via.placeholder.com/80x48'">
+      <div class="slide-item-info">
+        <strong>${s.title}</strong>
+        <span>★ ${s.rating} · ${s.year} · ${s.eps}</span>
+      </div>
+      <div class="slide-item-actions">
+        <button class="td-btn td-btn-edit" onclick="editHeroSlide(${i})"><i class="fas fa-edit"></i> Tahrirlash</button>
+        <button class="td-btn td-btn-del" onclick="deleteHeroSlide(${i})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function openHeroForm(editIdx=null) {
+  document.getElementById('hf-title').textContent=editIdx!==null?'Slaydni tahrirlash':'Yangi slayd qo\'shish';
+  document.getElementById('hf-edit-id').value=editIdx!==null?editIdx:'';
+  ['hf-title-inp','hf-year','hf-rating','hf-eps','hf-img','hf-desc'].forEach(id=>document.getElementById(id).value='');
+  ['htag-sub','htag-dub','htag-new','htag-hd'].forEach(id=>document.getElementById(id).checked=false);
+  document.getElementById('hf-img-prev').classList.remove('show');
+  if(editIdx!==null){
+    const s=HERO_SLIDES[editIdx];
+    if(!s) return;
+    document.getElementById('hf-title-inp').value=s.title;
+    document.getElementById('hf-year').value=s.year;
+    document.getElementById('hf-rating').value=s.rating;
+    document.getElementById('hf-eps').value=s.eps;
+    document.getElementById('hf-img').value=s.img;
+    document.getElementById('hf-desc').value=s.desc||'';
+    previewHeroImg(s.img);
+    (s.tags||[]).forEach(t=>{
+      const map={'SUB':'htag-sub','DUB':'htag-dub','YANGI':'htag-new','HD':'htag-hd'};
+      if(map[t]) document.getElementById(map[t]).checked=true;
+    });
+  }
+  document.getElementById('hero-form-bg').style.display='flex';
+}
+
+function editHeroSlide(i) { openHeroForm(i); }
+
+function closeHeroForm() { document.getElementById('hero-form-bg').style.display='none'; }
+
+function previewHeroImg(url) {
+  const el=document.getElementById('hf-img-prev');
+  if(url){ el.src=url; el.classList.add('show'); } else el.classList.remove('show');
+}
+
+function saveHeroSlide() {
+  const title=document.getElementById('hf-title-inp').value.trim();
+  const year=parseInt(document.getElementById('hf-year').value)||2024;
+  const rating=document.getElementById('hf-rating').value||'8.0';
+  const eps=document.getElementById('hf-eps').value.trim()||'12 ta qism';
+  const img=document.getElementById('hf-img').value.trim();
+  const desc=document.getElementById('hf-desc').value.trim();
+  if(!title||!img){ showToast('⚠️ Nom va rasm URL majburiy!'); return; }
+  const tags=[];
+  if(document.getElementById('htag-sub').checked) tags.push('SUB');
+  if(document.getElementById('htag-dub').checked) tags.push('DUB');
+  if(document.getElementById('htag-new').checked) tags.push('YANGI');
+  if(document.getElementById('htag-hd').checked) tags.push('HD');
+  const editIdx=document.getElementById('hf-edit-id').value;
+  if(editIdx!==''){
+    HERO_SLIDES[parseInt(editIdx)]={...HERO_SLIDES[parseInt(editIdx)],title,year,rating,eps,img,desc,tags};
+    logActivity('edit','Slayd yangilandi: '+title);
+    showToast('✅ Slayd yangilandi');
+  } else {
+    HERO_SLIDES.push({id:nextHeroId++,title,year,rating,eps,img,desc,tags});
+    logActivity('add','Yangi slayd: '+title);
+    showToast('✅ Slayd qo\'shildi: '+title);
+  }
+  closeHeroForm();
+  refreshAdmin();
+  buildHero();
+}
+
+function deleteHeroSlide(i) {
+  showConfirm(`"${HERO_SLIDES[i]?.title}" slaydini o'chirish?`,'',()=>{
+    const t=HERO_SLIDES[i]?.title;
+    HERO_SLIDES.splice(i,1);
+    logActivity('del','Slayd o\'chirildi: '+t);
+    showToast('🗑 Slayd o\'chirildi');
+    refreshAdmin();
+    buildHero();
+  });
+}
+
+// ── Schedule ──
+function admSchedDay(el,day) {
+  document.querySelectorAll('.sched-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  currentAdminSchedDay=day;
+  renderAdminSched(day);
+}
+
+function renderAdminSched(day) {
+  const items=scheduleData[day]||[];
+  document.getElementById('adm-sched-list').innerHTML=items.length?items.map((s,i)=>`
+    <div class="sched-item">
+      <div class="sitem-time">${s.time}</div>
+      <img src="${s.img}" alt="${s.title}" onerror="this.src='https://via.placeholder.com/44'">
+      <div class="sched-item-info">
+        <div style="font-weight:700;font-size:14px">${s.title} ${s.isNew?'<span class="sitem-new">YANGI</span>':''}</div>
+        <div style="font-size:12px;color:var(--muted)">${s.ep}</div>
+      </div>
+      <div class="td-actions">
+        <button class="td-btn td-btn-edit" onclick="editSchedItem('${day}',${i})"><i class="fas fa-edit"></i></button>
+        <button class="td-btn td-btn-del" onclick="deleteSchedItem('${day}',${i})"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join(''):`<p style="color:var(--muted);padding:20px;text-align:center">Bu kun uchun jadval yo'q</p>`;
+}
+
+function openSchedForm(editDay=null, editIdx=-1) {
+  document.getElementById('sf-edit-idx').value=editIdx;
+  document.getElementById('sf-day').value=editDay||currentAdminSchedDay;
+  document.getElementById('sf-time').value='';
+  document.getElementById('sf-title').value='';
+  document.getElementById('sf-ep').value='';
+  document.getElementById('sf-img').value='';
+  document.getElementById('sf-id').value='0';
+  document.getElementById('sf-isnew').checked=false;
+  document.getElementById('sf-img-prev').classList.remove('show');
+  if(editDay&&editIdx>=0){
+    const s=(scheduleData[editDay]||[])[editIdx];
+    if(s){
+      document.getElementById('sf-time').value=s.time;
+      document.getElementById('sf-title').value=s.title;
+      document.getElementById('sf-ep').value=s.ep;
+      document.getElementById('sf-img').value=s.img;
+      document.getElementById('sf-id').value=s.id||0;
+      document.getElementById('sf-isnew').checked=s.isNew||false;
+      previewSchedImg(s.img);
+    }
+  }
+  document.getElementById('sched-form-bg').style.display='flex';
+}
+
+function editSchedItem(day,i) { openSchedForm(day,i); }
+
+function closeSchedForm() { document.getElementById('sched-form-bg').style.display='none'; }
+
+function previewSchedImg(url) {
+  const el=document.getElementById('sf-img-prev');
+  if(url){ el.src=url; el.classList.add('show'); } else el.classList.remove('show');
+}
+
+function saveSchedItem() {
+  const day=document.getElementById('sf-day').value;
+  const time=document.getElementById('sf-time').value||'12:00';
+  const title=document.getElementById('sf-title').value.trim();
+  const ep=document.getElementById('sf-ep').value.trim()||'Qism 1';
+  const img=document.getElementById('sf-img').value.trim();
+  const id=parseInt(document.getElementById('sf-id').value)||0;
+  const isNew=document.getElementById('sf-isnew').checked;
+  if(!title){ showToast('⚠️ Anime nomi majburiy!'); return; }
+  const item={time,title,ep,img,id,isNew};
+  const editIdx=parseInt(document.getElementById('sf-edit-idx').value);
+  if(!scheduleData[day]) scheduleData[day]=[];
+  if(editIdx>=0 && editIdx<(scheduleData[day]||[]).length){
+    scheduleData[day][editIdx]=item;
+    logActivity('edit','Jadval yangilandi: '+title);
+    showToast('✅ Jadval yangilandi');
+  } else {
+    scheduleData[day].push(item);
+    scheduleData[day].sort((a,b)=>a.time.localeCompare(b.time));
+    logActivity('add','Jadvalga qo\'shildi: '+title);
+    showToast('✅ Jadvalga qo\'shildi: '+title);
+  }
+  closeSchedForm();
+  refreshAdmin();
+  renderAdminSched(day);
+  currentAdminSchedDay=day;
+}
+
+function deleteSchedItem(day,i) {
+  const t=(scheduleData[day]||[])[i]?.title;
+  showConfirm(`"${t}" ni jadvaldan o'chirish?`,'',()=>{
+    scheduleData[day].splice(i,1);
+    logActivity('del','Jadvaldan o\'chirildi: '+t);
+    showToast('🗑 O\'chirildi');
+    refreshAdmin();
+    renderAdminSched(day);
+  });
+}
+
+// ── Users ──
+function renderAdminUsers(items) {
+  document.getElementById('users-count').textContent=items.length;
+  document.getElementById('users-tbody').innerHTML=items.length?items.map((u,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${u.name}</strong></td>
+      <td>${u.email}</td>
+      <td>${u.date}</td>
+      <td><span class="td-badge sub">${u.status}</span></td>
+      <td><button class="td-btn td-btn-del" onclick="deleteUser(${i})"><i class="fas fa-ban"></i> Bloklash</button></td>
+    </tr>`).join(''):`<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--muted)">Hali foydalanuvchilar yo'q</td></tr>`;
+}
+
+function filterAdminUsers(q) {
+  const items=q?registeredUsers.filter(u=>u.name.toLowerCase().includes(q.toLowerCase())||u.email.toLowerCase().includes(q.toLowerCase())):registeredUsers;
+  renderAdminUsers(items);
+}
+
+function deleteUser(i) {
+  const u=registeredUsers[i];
+  showConfirm(`"${u?.name}" ni bloklash?`,'',()=>{
+    registeredUsers.splice(i,1);
+    logActivity('del','Foydalanuvchi bloklandi: '+(u?.name||''));
+    showToast('🚫 Foydalanuvchi bloklandi');
+    refreshAdmin();
+  });
+}
+
+// ── Activity Log ──
+function renderActivityLog() {
+  const icons={add:'fas fa-plus',edit:'fas fa-edit',del:'fas fa-trash',login:'fas fa-user'};
+  document.getElementById('activity-list').innerHTML=activityLog.length?
+    activityLog.map(a=>`<div class="activity-item">
+      <div class="act-icon ${a.type}"><i class="${icons[a.type]||'fas fa-info'}"></i></div>
+      <div class="act-text">${a.text}</div>
+      <div class="act-time">${a.time}</div>
+    </div>`).join(''):
+    `<p style="text-align:center;color:var(--muted);padding:40px">Hali faoliyat yo'q</p>`;
+}
+
+// ── Settings ──
+function saveSettings() {
+  const newPass=document.getElementById('sett-adminpass').value;
+  if(newPass) { ADMIN_PASS=newPass; document.getElementById('sett-adminpass').value=''; showToast('✅ Parol yangilandi!'); }
+  logActivity('edit','Sozlamalar saqlandi');
+  showToast('✅ Sozlamalar saqlandi!');
+}
+
+function changeAccentColor(val) {
+  document.documentElement.style.setProperty('--accent',val);
+  const r=parseInt(val.slice(1,3),16)+20;
+  const g=parseInt(val.slice(3,5),16)+5;
+  const b=parseInt(val.slice(5,7),16);
+  const accent2=`rgb(${Math.min(255,r)},${Math.min(255,g)},${Math.min(255,b)})`;
+  document.documentElement.style.setProperty('--accent2',accent2);
+}
+
+function confirmReset() {
+  showConfirm('Barcha anime ma\'lumotlarini tozalash?','Bu amalni qaytarib bo\'lmaydi! Asosiy ma\'lumotlar tiklanadi.',()=>{
+    ANIME_DB=[];HERO_SLIDES=[];activityLog=[];registeredUsers=[];
+    Object.keys(scheduleData).forEach(k=>scheduleData[k]=[]);
+    showToast('🗑 Barcha ma\'lumotlar tozalandi');
+    refreshAdmin();
+    initCarousels();
+  });
+}
+
+// ── Confirm dialog ──
+let confirmCallback=null;
+function showConfirm(title,msg,cb) {
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg||'Bu amalni qaytarib bo\'lmaydi.';
+  confirmCallback=cb;
+  document.getElementById('confirm-bg').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirm-bg').classList.remove('open'); confirmCallback=null; }
+document.getElementById('confirm-ok-btn').onclick=function(){ if(confirmCallback)confirmCallback(); closeConfirm(); };
+
+// ── Close forms on bg click ──
+document.getElementById('form-modal-bg').addEventListener('click',e=>{
+  if(e.target===document.getElementById('form-modal-bg')) closeAnimeForm();
+});
+
+// ════════ INIT ════════
+logActivity('login','Tizim ishga tushdi');
+initCarousels();
+</script>
+</body>
+</html>
